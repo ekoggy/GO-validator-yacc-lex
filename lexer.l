@@ -40,7 +40,8 @@ VAR_TYPE                "bool"|"byte"|"error"|"float32"|"float64"|"int"|"int8"|
 BOOL_CONST              "true"|"false"
 NIL_VAL                 "nil"
 
-MATH_SIGN               "+" | "-" | "/" | "%" | "*"
+MATH_SIGN               "+" | "-" | "/" | "%"
+ASTERISK                "*"
 UNO_OPERATION           "--" | "++"
 MATH_EQ_SIGN            "+=" | "-=" | "/=" | "%=" | "*="
 COMPARISON_SIGN         ">" | ">=" | "==" | "!=" | "<=" | "<" | "&&" | "||"
