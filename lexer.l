@@ -40,7 +40,8 @@ VAR_TYPE                "bool"|"byte"|"error"|"float32"|"float64"|"int"|"int8"|
 BOOL_CONST              "true"|"false"
 NIL_VAL                 "nil"
 
-MATH_SIGN               "+" | "-" | "/" | "%" | "*"
+MATH_SIGN               "+" | "-" | "/" | "%"
+ASTERISK                "*"
 UNO_OPERATION           "--" | "++"
 MATH_EQ_SIGN            "+=" | "-=" | "/=" | "%=" | "*="
 COMPARISON_SIGN         ">" | ">=" | "==" | "!=" | "<=" | "<" | "&&" | "||"
@@ -69,6 +70,7 @@ SQUARE_BRACKET_RIGHT    "]"
 
 <out_com>"~"                            return TILDE
 <out_com>"->"                           return ARROW;
+<out_com>"<-"                           return BACK_ARROW;
 <out_com>":="                           return DEFINE;
 <out_com>"..."                          return ELLIPSIS;
 <out_com>","                            return COMMA;
@@ -77,6 +79,9 @@ SQUARE_BRACKET_RIGHT    "]"
 <out_com>"."                            return PERIOD;
 
 <out_com>"package"                      return PACKAGE;
+<out_com>"interface"                    return INTERFACE;
+<out_com>"map"                          return MAP;
+<out_com>"chan"                         return CHAN;
 <out_com>"import"                       return IMPORT;
 <out_com>"func"                         return FUNC;
 <out_com>"break"                        return BREAK;
