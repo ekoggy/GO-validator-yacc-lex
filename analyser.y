@@ -1,9 +1,30 @@
+%{
+    #include <stdio.h>
+    #include <string.h>
+
+    #define ERROR_DROP(s) yyerror(s);
+    int yylex(void);
+
+    extern int      yylineno; 
+    extern unsigned sym_count;
+    extern unsigned errors;
+    extern FILE *yyin;
+   
+%}
+
+%start lines
+
+
+%%
+
+
 identifier:
-	LETTER { LETTER | DIGIT }
+	LETTER '{' LETTER '}'
+	LETTER '{' DIGIT '}'
 	;
 	
 Type:
-	TypeName [ TypeArgs ]
+	TypeName '[' TypeArgs ']'
 	| TypeLit
 	| REGULAR_BRACKET_LEFT Type REGULAR_BRACKET_RIGHT
 	;
@@ -14,11 +35,11 @@ TypeName:
 	;
 	
 TypeArgs:
-	SQUARE_BRACKET_LEFT TypeList [ COMMA ] SQUARE_BRACKET_RIGHT
+	SQUARE_BRACKET_LEFT TypeList '[' COMMA ']' SQUARE_BRACKET_RIGHT
 	;
 	
 TypeList:
-	Type { COMMA Type }
+	Type '{' COMMA Type '}'
 	;
 	
 TypeLit:
@@ -49,15 +70,16 @@ SliceType:
 	;
 	
 StructType:
-	STRUCT CURLY_BRACKET_LEFT { FieldDecl SEMICOLON } CURLY_BRACKET_RIGHT
+	STRUCT CURLY_BRACKET_LEFT '{' FieldDecl SEMICOLON '}' CURLY_BRACKET_RIGHT
 	;
 	
 FieldDecl:
-	(IdentifierList Type | EmbeddedField) [ Tag ]
+	'('EmbeddedField')' '[' Tag ']' |
+	'('IdentifierList Type ')' '[' Tag ']'
 	;
 	
 EmbeddedField:
-	[ ASTERISK ] TypeName
+	'[' ASTERISK ']' TypeName
 	;
 	
 Tag:
@@ -77,7 +99,7 @@ FunctionType:
 	;
 	
 Signature:
-	Parameters [ Result ]
+	Parameters '[' Result ']'
 	;
 	
 Result:
@@ -85,19 +107,19 @@ Result:
 	| Type
 	;
 Parameters:
-	REGULAR_BRACKET_LEFT [ ParameterList [ COMMA ] ] REGULAR_BRACKET_RIGHT
+	REGULAR_BRACKET_LEFT '[' ParameterList '[' COMMA ']' ']' REGULAR_BRACKET_RIGHT
 	;
 	
 ParameterList:
-	ParameterDecl { COMMA ParameterDecl }
+	ParameterDecl '{' COMMA ParameterDecl '}'
 	;
 	
 ParameterDecl:
-	[ IdentifierList ] [ ELLIPSIS ] Type
+	'[' IdentifierList ']' '[' ELLIPSIS ']' Type
 	;
 	
 InterfaceType:
-	"interface" CURLY_BRACKET_LEFT { InterfaceElem SEMICOLON } CURLY_BRACKET_RIGHT
+	INTERFACE CURLY_BRACKET_LEFT '{' InterfaceElem SEMICOLON '}' CURLY_BRACKET_RIGHT
 	;
 	
 InterfaceElem :
@@ -114,7 +136,7 @@ MethodName:
 	;
 	
 TypeElem:
-	TypeTerm { LOGICAL_SINGS TypeTerm }
+	TypeTerm '{' LOGICAL_SINGS TypeTerm '}'
 	;
 	
 TypeTerm:
@@ -134,8 +156,14 @@ KeyType:
 	Type
 	;
 	
+HelpChan:
+	CHAN
+	 | CHAN BACK_ARROW
+	 | BACK_ARROW CHAN
+	;
+
 ChannelType:
-	( CHAN | CHAN BACK_ARROW | BACK_ARROW CHAN ) ElementType
+	'(' HelpChan ')' ElementType
 	;
 	
 Block:
@@ -143,7 +171,7 @@ Block:
 	;
 	
 StatementList:
-	{ Statement SEMICOLON }
+	'{' Statement SEMICOLON '}'
 	;
 	
 Declaration:
@@ -157,25 +185,35 @@ TopLevelDecl:
 	| FunctionDecl
 	| MethodDecl
 	;
-	
+
+HelpParam7:
+	ConstSpec
+	 | REGULAR_BRACKET_LEFT '{' ConstSpec SEMICOLON '}' REGULAR_BRACKET_RIGHT
+	;
+
 ConstDecl:
-	CONST ( ConstSpec | REGULAR_BRACKET_LEFT { ConstSpec SEMICOLON } REGULAR_BRACKET_RIGHT )
+	CONST '(' HelpParam7 ')'
 	;
 	
 ConstSpec:
-	IdentifierList [ [ Type ] EQUAL ExpressionList ]
+	IdentifierList '[' '[' Type ']' EQUAL ExpressionList ']'
 	;
 
 IdentifierList:
-	identifier { COMMA identifier }
+	identifier '{' COMMA identifier '}'
 	;
 	
 ExpressionList:
-	Expression { COMMA Expression }
+	Expression '{' COMMA Expression '}'
 	;
 	
+HelpParam6:
+	TypeSpec
+	 | REGULAR_BRACKET_LEFT '{' TypeSpec SEMICOLON '}' REGULAR_BRACKET_RIGHT
+	;
+
 TypeDecl:
-	TYPE ( TypeSpec | REGULAR_BRACKET_LEFT { TypeSpec SEMICOLON } REGULAR_BRACKET_RIGHT )
+	TYPE '(' HelpParam6 ')'
 	;
 	
 TypeSpec:
@@ -188,15 +226,15 @@ AliasDecl:
 	;
 	
 TypeDef:
-	identifier [ TypeParameters ] Type
+	identifier '[' TypeParameters ']' Type
 	;
 	
 TypeParameters:
-	SQUARE_BRACKET_LEFT TypeParamList [ COMMA ] SQUARE_BRACKET_RIGHT
+	SQUARE_BRACKET_LEFT TypeParamList '[' COMMA ']' SQUARE_BRACKET_RIGHT
 	;
 	
 TypeParamList:
-	TypeParamDecl { COMMA TypeParamDecl }
+	TypeParamDecl '{' COMMA TypeParamDecl '}'
 	;
 	
 TypeParamDecl:
@@ -207,20 +245,30 @@ TypeConstraint:
 	TypeElem
 	;
 	
+HelpParam5:
+	VarSpec
+	 | REGULAR_BRACKET_LEFT '{' VarSpec SEMICOLON '}' REGULAR_BRACKET_RIGHT
+	;
+
 VarDecl:
-	VAR ( VarSpec | REGULAR_BRACKET_LEFT { VarSpec SEMICOLON } REGULAR_BRACKET_RIGHT )
+	VAR '(' HelpParam5 ')'
 	;
 	
+HelpParam4:
+	Type '[' EQUAL ExpressionList ']'
+	 | EQUAL ExpressionList
+	;
+
 VarSpec:
-	IdentifierList ( Type [ EQUAL ExpressionList ] | EQUAL ExpressionList )
+	IdentifierList '(' HelpParam4 ')'
 	;
 	
-ShortVarDeclЖ
+ShortVarDecl:
 	IdentifierList DEFINE ExpressionList
 	;
 	
 FunctionDecl:
-	FUNC FunctionName [ TypeParameters ] Signature [ FunctionBody ]
+	FUNC FunctionName '[' TypeParameters ']' Signature '[' FunctionBody ']'
 	;
 	
 FunctionName:
@@ -232,7 +280,7 @@ FunctionBody:
 	;
 	
 MethodDecl:
-	FUNC Receiver MethodName Signature [ FunctionBody ]
+	FUNC Receiver MethodName Signature '[' FunctionBody ']'
 	;
 	
 Receiver:
@@ -240,7 +288,7 @@ Receiver:
 	;
 	
 MethodDecl:
-	FUNC Receiver MethodName Signature [ FunctionBody ]
+	FUNC Receiver MethodName Signature '[' FunctionBody ']'
 	;
 	
 Receiver:
@@ -249,7 +297,7 @@ Receiver:
 	
 Operand:
 	Literal
-	| OperandName [ TypeArgs ]
+	| OperandName '[' TypeArgs ']'
 	| REGULAR_BRACKET_LEFT Expression REGULAR_BRACKET_RIGHT
 	;
 	
@@ -290,15 +338,15 @@ LiteralType:
 	;
 	
 LiteralValue:
-	CURLY_BRACKET_LEFT [ ElementList [ COMMA ] ] CURLY_BRACKET_RIGHT
+	CURLY_BRACKET_LEFT '[' ElementList '[' COMMA ']' ']' CURLY_BRACKET_RIGHT
 	;
 	
 ElementList:
-	KeyedElement { COMMA KeyedElement }
+	KeyedElement '{' COMMA KeyedElement '}'
 	;
 	
 KeyedElement:
-	[ Key COLON ] Element
+	'[' Key COLON ']' Element
 	;
 	
 Key:
@@ -339,7 +387,7 @@ UnaryExpr:
 	;
 
 Conversion:
-	Type REGULAR_BRACKET_LEFT Expression [ COMMA ] REGULAR_BRACKET_RIGHT
+	Type REGULAR_BRACKET_LEFT Expression '[' COMMA ']' REGULAR_BRACKET_RIGHT
 	;
 
 Statement:
@@ -392,19 +440,27 @@ Channel:
 	;
 	
 IncDecStmt:
-	Expression ( UNO_OPERATION )
+	Expression '(' UNO_OPERATION ')'
 	;
 	
 Assignment:
 	ExpressionList assign_op ExpressionList
 	;
 
+HelpParam3:
+	MATH_SIGN | ASTERISK | LOGICAL_SINGS
+	;
+
 assign_op:
-	[ MATH_SIGN | ASTERISK | LOGICAL_SINGS ] EQUAL
+	'[' HelpParam3 ']' EQUAL
+	;
+
+HelpParam2:
+	IfStmt | Block 
 	;
 
 IfStmt:
-	IF [ SimpleStmt SEMICOLON ] Expression Block [ ELSE ( IfStmt | Block ) ]
+	IF '[' SimpleStmt SEMICOLON ']' Expression Block '[' ELSE '(' HelpParam2 ')' ']'
 	;
 
 SwitchStmt:
@@ -413,7 +469,7 @@ SwitchStmt:
 	;
 
 ExprSwitchStmt:
-	SWITCH [ SimpleStmt SEMICOLON ] [ Expression ] CURLY_BRACKET_LEFT { ExprCaseClause } CURLY_BRACKET_RIGHT
+	SWITCH '[' SimpleStmt SEMICOLON ']' '[' Expression ']' CURLY_BRACKET_LEFT '{' ExprCaseClause '}' CURLY_BRACKET_RIGHT
 	;
 	
 ExprCaseClause:
@@ -426,11 +482,11 @@ ExprSwitchCase:
 	;
 
 TypeSwitchStmt:
-	SWITCH [ SimpleStmt SEMICOLON ] TypeSwitchGuard CURLY_BRACKET_LEFT { TypeCaseClause } CURLY_BRACKET_RIGHT
+	SWITCH '[' SimpleStmt SEMICOLON ']' TypeSwitchGuard CURLY_BRACKET_LEFT '{' TypeCaseClause '}' CURLY_BRACKET_RIGHT
 	;
 	
 TypeSwitchGuard:
-	[ identifier DEFINE ] PrimaryExpr PERIOD REGULAR_BRACKET_LEFT TYPE REGULAR_BRACKET_RIGHT
+	'[' identifier DEFINE ']' PrimaryExpr PERIOD REGULAR_BRACKET_LEFT TYPE REGULAR_BRACKET_RIGHT
 	;
 	
 TypeCaseClause:
@@ -442,8 +498,12 @@ TypeSwitchCase:
 	| DEFAULT
 	;
 
+HelpParam1:
+	Condition | ForClause | RangeClause
+	;
+
 ForStmt:
-	FOR [ Condition | ForClause | RangeClause ] Block
+	FOR '[' HelpParam1 ']' Block
 	;
 	
 Condition:
@@ -451,7 +511,7 @@ Condition:
 	;
 
 ForClause:
-	[ InitStmt ] SEMICOLON [ Condition ] SEMICOLON [ PostStmt ]
+	'[' InitStmt ']' SEMICOLON '[' Condition ']' SEMICOLON '[' PostStmt ']'
 	;
 	
 InitStmt:
@@ -463,7 +523,8 @@ PostStmt:
 	;
 
 RangeClause:
-	[ ExpressionList EQUAL | IdentifierList DEFINE ] RANGE Expression
+	'[' IdentifierList DEFINE ']' RANGE Expression | 
+	'[' ExpressionList EQUAL ']' RANGE Expression
 	;
 
 GoStmt:
@@ -471,15 +532,15 @@ GoStmt:
 	;
 
 ReturnStmt:
-	RETURN [ ExpressionList ]
+	RETURN '[' ExpressionList ']'
 	;
 
 BreakStmt:
-	BREAK [ Label ]
+	BREAK '[' Label ']'
 	;
 
 ContinueStmt:
-	CONTINUE [ Label ]
+	CONTINUE '[' Label ']'
 	;
 
 GotoStmt:
@@ -495,7 +556,7 @@ DeferStmt:
 	;
 
 SourceFile:
-	PackageClause SEMICOLON { ImportDecl SEMICOLON } { TopLevelDecl SEMICOLON }
+	PackageClause SEMICOLON '{' ImportDecl SEMICOLON '}' '{' TopLevelDecl SEMICOLON '}'
 	;
 
 PackageClause:
@@ -507,13 +568,17 @@ PackageName:
 	;
 
 ImportDecl:
-	IMPORT ( ImportSpec | REGULAR_BRACKET_LEFT { ImportSpec SEMICOLON } REGULAR_BRACKET_RIGHT )
+	IMPORT '(' ImportSpec ')' |
+	IMPORT '(' REGULAR_BRACKET_LEFT '{' ImportSpec SEMICOLON '}' REGULAR_BRACKET_RIGHT ')'
 	;
 	
 ImportSpec:
-	[ PERIOD | PackageName ] ImportPath
+	'[' PERIOD ']' ImportPath | 
+	'[' PackageName ']' ImportPath
 	;
 	
 ImportPath:
 	STRING
 	;
+
+%%
