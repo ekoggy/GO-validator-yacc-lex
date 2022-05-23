@@ -81,6 +81,9 @@ SQUARE_BRACKET_RIGHT    "]"
 <out_com>"package"                      return PACKAGE;
 <out_com>"interface"                    return INTERFACE;
 <out_com>"map"                          return MAP;
+<out_com>"goto"                         return GOTO;
+<out_com>"fallthrough"                  return FALLTHROUGH;
+<out_com>"defer"                        return DEFER;
 <out_com>"chan"                         return CHAN;
 <out_com>"import"                       return IMPORT;
 <out_com>"func"                         return FUNC;
