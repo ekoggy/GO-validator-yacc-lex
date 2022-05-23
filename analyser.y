@@ -5,7 +5,7 @@ identifier:
 Type:
 	TypeName [ TypeArgs ]
 	| TypeLit
-	| "(" Type ")"
+	| REGULAR_BRACKET_LEFT Type REGULAR_BRACKET_RIGHT
 	;
 	
 TypeName:
@@ -14,11 +14,11 @@ TypeName:
 	;
 	
 TypeArgs:
-	"[" TypeList [ "," ] "]"
+	SQUARE_BRACKET_LEFT TypeList [ COMMA ] SQUARE_BRACKET_RIGHT
 	;
 	
 TypeList:
-	Type { "," Type }
+	Type { COMMA Type }
 	;
 	
 TypeLit:
@@ -33,7 +33,7 @@ TypeLit:
 	;
 	
 ArrayType:
-	"[" ArrayLength "]" ElementType
+	SQUARE_BRACKET_LEFT ArrayLength SQUARE_BRACKET_RIGHT ElementType
 	;
 	
 ArrayLength:
@@ -45,11 +45,11 @@ ElementType:
 	;
 	
 SliceType:
-	"[" "]" ElementType
+	SQUARE_BRACKET_LEFT SQUARE_BRACKET_RIGHT ElementType
 	;
 	
 StructType:
-	"struct" "{" { FieldDecl ";" } "}"
+	STRUCT CURLY_BRACKET_LEFT { FieldDecl SEMICOLON } CURLY_BRACKET_RIGHT
 	;
 	
 FieldDecl:
@@ -57,15 +57,15 @@ FieldDecl:
 	;
 	
 EmbeddedField:
-	[ "*" ] TypeName
+	[ ASTERISK ] TypeName
 	;
 	
 Tag:
-	string_lit
+	STRING
 	;
 	
 PointerType:
-	"*" BaseType
+	ASTERISK BaseType
 	;
 	
 BaseType:
@@ -73,7 +73,7 @@ BaseType:
 	;
 	
 FunctionType:
-	"func" Signature
+	FUNC Signature
 	;
 	
 Signature:
@@ -85,19 +85,19 @@ Result:
 	| Type
 	;
 Parameters:
-	"(" [ ParameterList [ "," ] ] ")"
+	REGULAR_BRACKET_LEFT [ ParameterList [ COMMA ] ] REGULAR_BRACKET_RIGHT
 	;
 	
 ParameterList:
-	ParameterDecl { "," ParameterDecl }
+	ParameterDecl { COMMA ParameterDecl }
 	;
 	
 ParameterDecl:
-	[ IdentifierList ] [ "..." ] Type
+	[ IdentifierList ] [ ELLIPSIS ] Type
 	;
 	
 InterfaceType:
-	"interface" "{" { InterfaceElem ";" } "}"
+	"interface" CURLY_BRACKET_LEFT { InterfaceElem SEMICOLON } CURLY_BRACKET_RIGHT
 	;
 	
 InterfaceElem :
@@ -114,7 +114,7 @@ MethodName:
 	;
 	
 TypeElem:
-	TypeTerm { "|" TypeTerm }
+	TypeTerm { LOGICAL_SINGS TypeTerm }
 	;
 	
 TypeTerm:
@@ -123,11 +123,11 @@ TypeTerm:
 	;
 	
 UnderlyingType:
-	"~" Type
+	TILDE Type
 	;
 	
 MapType:
-	"map" "[" KeyType "]" ElementType
+	MAP SQUARE_BRACKET_LEFT KeyType SQUARE_BRACKET_RIGHT ElementType
 	;
 	
 KeyType:
@@ -135,7 +135,15 @@ KeyType:
 	;
 	
 ChannelType:
-	( "chan" | "chan" "<-" | "<-" "chan" ) ElementType
+	( CHAN | CHAN BACK_ARROW | BACK_ARROW CHAN ) ElementType
+	;
+	
+Block:
+	CURLY_BRACKET_LEFT StatementList CURLY_BRACKET_RIGHT
+	;
+	
+StatementList:
+	{ Statement SEMICOLON }
 	;
 	
 Declaration:
@@ -151,23 +159,23 @@ TopLevelDecl:
 	;
 	
 ConstDecl:
-	"const" ( ConstSpec | "(" { ConstSpec ";" } ")" )
+	CONST ( ConstSpec | REGULAR_BRACKET_LEFT { ConstSpec SEMICOLON } REGULAR_BRACKET_RIGHT )
 	;
 	
 ConstSpec:
-	IdentifierList [ [ Type ] "=" ExpressionList ]
+	IdentifierList [ [ Type ] EQUAL ExpressionList ]
 	;
 
 IdentifierList:
-	identifier { "," identifier }
+	identifier { COMMA identifier }
 	;
 	
 ExpressionList:
-	Expression { "," Expression }
+	Expression { COMMA Expression }
 	;
 	
 TypeDecl:
-	"type" ( TypeSpec | "(" { TypeSpec ";" } ")" )
+	TYPE ( TypeSpec | REGULAR_BRACKET_LEFT { TypeSpec SEMICOLON } REGULAR_BRACKET_RIGHT )
 	;
 	
 TypeSpec:
@@ -176,7 +184,7 @@ TypeSpec:
 	;
 	
 AliasDecl:
-	identifier "=" Type
+	identifier EQUAL Type
 	;
 	
 TypeDef:
@@ -184,11 +192,11 @@ TypeDef:
 	;
 	
 TypeParameters:
-	"[" TypeParamList [ "," ] "]"
+	SQUARE_BRACKET_LEFT TypeParamList [ COMMA ] SQUARE_BRACKET_RIGHT
 	;
 	
 TypeParamList:
-	TypeParamDecl { "," TypeParamDecl }
+	TypeParamDecl { COMMA TypeParamDecl }
 	;
 	
 TypeParamDecl:
@@ -200,19 +208,19 @@ TypeConstraint:
 	;
 	
 VarDecl:
-	"var" ( VarSpec | "(" { VarSpec ";" } ")" )
+	VAR ( VarSpec | REGULAR_BRACKET_LEFT { VarSpec SEMICOLON } REGULAR_BRACKET_RIGHT )
 	;
 	
 VarSpec:
-	IdentifierList ( Type [ "=" ExpressionList ] | "=" ExpressionList )
+	IdentifierList ( Type [ EQUAL ExpressionList ] | EQUAL ExpressionList )
 	;
 	
 ShortVarDeclЖ
-	IdentifierList ":=" ExpressionList
+	IdentifierList DEFINE ExpressionList
 	;
 	
 FunctionDecl:
-	"func" FunctionName [ TypeParameters ] Signature [ FunctionBody ]
+	FUNC FunctionName [ TypeParameters ] Signature [ FunctionBody ]
 	;
 	
 FunctionName:
@@ -224,7 +232,7 @@ FunctionBody:
 	;
 	
 MethodDecl:
-	"func" Receiver MethodName Signature [ FunctionBody ]
+	FUNC Receiver MethodName Signature [ FunctionBody ]
 	;
 	
 Receiver:
@@ -232,9 +240,280 @@ Receiver:
 	;
 	
 MethodDecl:
-	"func" Receiver MethodName Signature [ FunctionBody ]
+	FUNC Receiver MethodName Signature [ FunctionBody ]
 	;
 	
 Receiver:
 	Parameters
+	;
+	
+Operand:
+	Literal
+	| OperandName [ TypeArgs ]
+	| REGULAR_BRACKET_LEFT Expression REGULAR_BRACKET_RIGHT
+	;
+	
+Literal:
+	BasicLit
+	| CompositeLit
+	| FunctionLit
+	;
+	
+BasicLit:
+	int_lit
+	| float_lit
+	| imaginary_lit
+	| rune_lit
+	| STRING
+	;
+
+OperandName:
+	identifier
+	| QualifiedIdent
+	;
+
+QualifiedIdent:
+	PackageName PERIOD identifier
+	;
+
+CompositeLit:
+	LiteralType LiteralValue
+	;
+	
+LiteralType:
+	StructType
+	| ArrayType
+	| SQUARE_BRACKET_LEFT ELLIPSIS SQUARE_BRACKET_RIGHT ElementType
+	| SliceType
+	| MapType
+	| TypeName
+	;
+	
+LiteralValue:
+	CURLY_BRACKET_LEFT [ ElementList [ COMMA ] ] CURLY_BRACKET_RIGHT
+	;
+	
+ElementList:
+	KeyedElement { COMMA KeyedElement }
+	;
+	
+KeyedElement:
+	[ Key COLON ] Element
+	;
+	
+Key:
+	FieldName
+	| Expression
+	| LiteralValue
+	;
+	
+FieldName:
+	identifier
+	;
+	
+Element:
+	Expression
+	| LiteralValue
+	;
+	
+FunctionLit:
+	FUNC Signature FunctionBody
+	;
+	
+MethodExpr:
+	ReceiverType PERIOD MethodName
+	;
+	
+ReceiverType:
+	Type
+	;
+
+Expression:
+	UnaryExpr
+	| Expression COMPARISON_SIGN Expression
+	;
+	
+UnaryExpr:
+	PrimaryExpr
+	| MATH_SIGN UnaryExpr
+	;
+
+Conversion:
+	Type REGULAR_BRACKET_LEFT Expression [ COMMA ] REGULAR_BRACKET_RIGHT
+	;
+
+Statement:
+	Declaration
+	| LabeledStmt
+	| SimpleStmt
+	| GoStmt
+	| ReturnStmt
+	| BreakStmt
+	| ContinueStmt
+	| GotoStmt
+	| FallthroughStmt
+	| Block
+	| IfStmt
+	| SwitchStmt
+	| ForStmt
+	| DeferStmt
+	;
+
+SimpleStmt:
+	EmptyStmt
+	| ExpressionStmt
+	| SendStmt
+	| IncDecStmt
+	| Assignment
+	| ShortVarDecl
+	;
+	
+EmptyStmt:
+	;
+	
+LabeledStmt:
+	Label COLON Statement
+	;
+	
+Label:
+	identifier
+	;
+	
+ExpressionStmt:
+	Expression
+	;
+	
+SendStmt:
+	Channel BACK_ARROW Expression
+	;
+	
+Channel:
+	Expression
+	;
+	
+IncDecStmt:
+	Expression ( UNO_OPERATION )
+	;
+	
+Assignment:
+	ExpressionList assign_op ExpressionList
+	;
+
+assign_op:
+	[ MATH_SIGN | ASTERISK | LOGICAL_SINGS ] EQUAL
+	;
+
+IfStmt:
+	IF [ SimpleStmt SEMICOLON ] Expression Block [ ELSE ( IfStmt | Block ) ]
+	;
+
+SwitchStmt:
+	ExprSwitchStmt
+	| TypeSwitchStmt
+	;
+
+ExprSwitchStmt:
+	SWITCH [ SimpleStmt SEMICOLON ] [ Expression ] CURLY_BRACKET_LEFT { ExprCaseClause } CURLY_BRACKET_RIGHT
+	;
+	
+ExprCaseClause:
+	ExprSwitchCase COLON StatementList
+	;
+	
+ExprSwitchCase:
+	CASE ExpressionList
+	| DEFAULT
+	;
+
+TypeSwitchStmt:
+	SWITCH [ SimpleStmt SEMICOLON ] TypeSwitchGuard CURLY_BRACKET_LEFT { TypeCaseClause } CURLY_BRACKET_RIGHT
+	;
+	
+TypeSwitchGuard:
+	[ identifier DEFINE ] PrimaryExpr PERIOD REGULAR_BRACKET_LEFT TYPE REGULAR_BRACKET_RIGHT
+	;
+	
+TypeCaseClause:
+	TypeSwitchCase COLON StatementList
+	;
+	
+TypeSwitchCase:
+	CASE TypeList
+	| DEFAULT
+	;
+
+ForStmt:
+	FOR [ Condition | ForClause | RangeClause ] Block
+	;
+	
+Condition:
+	Expression
+	;
+
+ForClause:
+	[ InitStmt ] SEMICOLON [ Condition ] SEMICOLON [ PostStmt ]
+	;
+	
+InitStmt:
+	SimpleStmt
+	;
+	
+PostStmt:
+	SimpleStmt
+	;
+
+RangeClause:
+	[ ExpressionList EQUAL | IdentifierList DEFINE ] RANGE Expression
+	;
+
+GoStmt:
+	GO Expression
+	;
+
+ReturnStmt:
+	RETURN [ ExpressionList ]
+	;
+
+BreakStmt:
+	BREAK [ Label ]
+	;
+
+ContinueStmt:
+	CONTINUE [ Label ]
+	;
+
+GotoStmt:
+	GOTO Label
+	;
+
+FallthroughStmt:
+	FALLTHROUGH
+	;
+
+DeferStmt:
+	DEFER Expression
+	;
+
+SourceFile:
+	PackageClause SEMICOLON { ImportDecl SEMICOLON } { TopLevelDecl SEMICOLON }
+	;
+
+PackageClause:
+	PACKAGE PackageName
+	;
+	
+PackageName:
+	identifier
+	;
+
+ImportDecl:
+	IMPORT ( ImportSpec | REGULAR_BRACKET_LEFT { ImportSpec SEMICOLON } REGULAR_BRACKET_RIGHT )
+	;
+	
+ImportSpec:
+	[ PERIOD | PackageName ] ImportPath
+	;
+	
+ImportPath:
+	STRING
 	;
