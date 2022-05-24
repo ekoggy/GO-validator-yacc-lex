@@ -1,16 +1,14 @@
 %{
 
 //Это когда будут библиотеки и нужна будет переносимость 
-/*#ifdef __unix__
+#ifdef __unix__
 // __unix__ is usually defined by compilers targeting Unix systems
 #include "y.tab.h"
 #elif defined _WIN32
 // _Win32 is usually defined by compilers targeting 32 or 64 bit Windows systems
 #include "parser.tab.h"
 #endif
-//временная библа с дефайнами вместо неё будут либы выше
-#include "temp_lib.h"
-*/
+
 
 int yylex();
 %option yylineno
@@ -34,19 +32,11 @@ RUNE                    \'( UNICODE_VALUE|BYTE)\'
 
 
 NEW_LINE                [\n]
-VAR_TYPE                "bool"|"byte"|"error"|"float32"|"float64"|"int"|"int8"|
-                        "int16"|"int32"|"int64"|"rune"|"string"|"uint"|"uint8"|
-                        "uint16"|"uint32"|"uint64"|"uintptr"|complex64|complex128
+VAR_TYPE                "bool"|"byte"|"error"|"float32"|"float64"|"int"|"int8"|"int16"|"int32"|"int64"|"rune"|"string"|"uint"|"uint8"|"uint16"|"uint32"|"uint64"|"uintptr"|complex64|complex128
 BOOL_CONST              "true"|"false"
 NIL_VAL                 "nil"
 
-MATH_SIGN               "+" | "-" | "/" | "%"
 ASTERISK                "*"
-UNO_OPERATION           "--" | "++"
-MATH_EQ_SIGN            "+=" | "-=" | "/=" | "%=" | "*="
-COMPARISON_SIGN         ">" | ">=" | "==" | "!=" | "<=" | "<" | "&&" | "||"
-LOGICAL_SINGS           "!" | "&" | "|" | "^" | ">>" | "<<" | "&^"
-LOGICAL_EQ_SIGN         "&=" | "|=" | "^=" | "<<=" | ">>=" | "&^="
 EQUAL                   "="
 
 CURLY_BRACKET_LEFT      "{"
@@ -68,7 +58,7 @@ SQUARE_BRACKET_RIGHT    "]"
 <in_single>.            ;
 <in_single>\n           BEGIN out_com;
 
-<out_com>"~"                            return TILDE
+<out_com>"~"                            return TILDE;
 <out_com>"->"                           return ARROW;
 <out_com>"<-"                           return BACK_ARROW;
 <out_com>":="                           return DEFINE;
@@ -107,12 +97,29 @@ SQUARE_BRACKET_RIGHT    "]"
 <out_com>{BOOL_CONST}                   return BOOL_CONST;
 <out_com>{NIL_VAL}                      return NIL_VAL;
 
-<out_com>{MATH_SIGN}                    return MATH_SIGN;
-<out_com>{MATH_EQ_SIGN}                 return MATH_EQ_SIGN;
-<out_com>{COMPARISON_SIGN}              return COMPARISON_SIGN;
+<out_com>{ASTERISK}                     return ASTERISK;
 
-<out_com>{LOGICAL_SINGS}                return LOGICAL_SINGS;
-<out_com>{LOGICAL_EQ_SIGN}              return LOGICAL_EQ_SIGN;
+"+"				{;return MATH_SIGN;}
+"-"				{;return MATH_SIGN;}
+"*"				{;return MATH_SIGN;}
+"/"				{;return MATH_SIGN;}
+"%"				{;return MATH_SIGN;}
+
+"&&"				{;return COMPARISON_SIGN;}
+"||"				{;return COMPARISON_SIGN;}
+"++"				{;return UNO_OPERATION;}
+"--"				{;return UNO_OPERATION;}
+
+
+"=="			{;return LOGICAL_SING;}
+">"				{;return LOGICAL_SING;}
+"<"				{;return LOGICAL_SING;}
+"!"				{;return LOGICAL_SING;}
+
+"!="			{;return LOGICAL_EQ_SING;}
+"<="			{;return LOGICAL_EQ_SING;}
+">="			{;return LOGICAL_EQ_SING;}
+
 <out_com>{EQUAL}                        return EQUAL;
 
 <out_com>{CURLY_BRACKET_LEFT}           return CURLY_BRACKET_LEFT;
