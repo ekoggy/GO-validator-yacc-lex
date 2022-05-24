@@ -99,26 +99,25 @@ SQUARE_BRACKET_RIGHT    "]"
 
 <out_com>{ASTERISK}                     return ASTERISK;
 
-"+"				{;return MATH_SIGN;}
-"-"				{;return MATH_SIGN;}
-"*"				{;return MATH_SIGN;}
-"/"				{;return MATH_SIGN;}
-"%"				{;return MATH_SIGN;}
+<out_com>"+"				{;return MATH_SIGN;}
+<out_com>"-"				{;return MATH_SIGN;}
+<out_com>"/"				{;return MATH_SIGN;}
+<out_com>"%"				{;return MATH_SIGN;}
 
-"&&"				{;return COMPARISON_SIGN;}
-"||"				{;return COMPARISON_SIGN;}
-"++"				{;return UNO_OPERATION;}
-"--"				{;return UNO_OPERATION;}
+<out_com>"&&"				{;return COMPARISON_SIGN;}
+<out_com>"||"				{;return COMPARISON_SIGN;}
+<out_com>"++"				{;return UNO_OPERATION;}
+<out_com>"--"				{;return UNO_OPERATION;}
 
 
-"=="			{;return LOGICAL_SING;}
-">"				{;return LOGICAL_SING;}
-"<"				{;return LOGICAL_SING;}
-"!"				{;return LOGICAL_SING;}
+<out_com>"=="			{;return LOGICAL_SING;}
+<out_com>">"				{;return LOGICAL_SING;}
+<out_com>"<"				{;return LOGICAL_SING;}
+<out_com>"!"				{;return LOGICAL_SING;}
 
-"!="			{;return LOGICAL_EQ_SING;}
-"<="			{;return LOGICAL_EQ_SING;}
-">="			{;return LOGICAL_EQ_SING;}
+<out_com>"!="			{;return LOGICAL_EQ_SING;}
+<out_com>"<="			{;return LOGICAL_EQ_SING;}
+<out_com>">="			{;return LOGICAL_EQ_SING;}
 
 <out_com>{EQUAL}                        return EQUAL;
 
