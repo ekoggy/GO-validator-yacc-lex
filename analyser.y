@@ -71,6 +71,7 @@
 %token <str> T_STRING 
 %token <str> T_MAP
 %token <str> T_ARR
+%token <str> T_CTYPE
 %token T_ASSIGN T_SEMI
 %token <str> T_FLOAT64
 %token <str> T_IDENTIFIER
