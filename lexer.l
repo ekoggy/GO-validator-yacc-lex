@@ -15,9 +15,8 @@ optionalFraction            (\.{digits})?
 optionalExponent            ([Ee][+-]?{digits})?
 intNumber                   {digits}
 floatNumber                 {digits}{optionalFraction}{optionalExponent}
-identifier                  ({letter}|{underscore})({letter}|{digits}|{underscore})*
-custom_type                 ({letter}|{underscore})({letter}|{digits}|{underscore})*
-types                       (int|bool|float|string|char|custom_type)
+identifier                  [a-zA-Z_][a-zA-Z0-9_\.]*
+types                       (int|bool|float|string|char|identifier)
 
 
 %%
@@ -127,9 +126,6 @@ true                                         {return T_TRUE;}
 {floatNumber}                                {return T_FLOAT64;}
 map\[{types}\]{types}                        {return T_MAP;}
 \[\]{types}                                  {return T_ARR;}
-
-
-
 
 
 {identifier}			                     {return T_IDENTIFIER;}
