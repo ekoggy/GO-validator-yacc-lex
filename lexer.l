@@ -1,142 +1,152 @@
 %{
+#include <stdio.h>
+#include <stdlib.h>
+#include "parcer.h"
+extern int yyscope;
+extern int yylineno;
 
-//Это когда будут библиотеки и нужна будет переносимость 
-#ifdef __unix__
-// __unix__ is usually defined by compilers targeting Unix systems
-#include "y.tab.h"
-#elif defined _WIN32
-// _Win32 is usually defined by compilers targeting 32 or 64 bit Windows systems
-#include "parser.tab.h"
-#endif
-
-
-int yylex();
-%option yylineno
-%option  noyywrap
 %}
-
-LETTER                  [a-zA-Z]
-DIGIT                   [0-9]
-OCT                     [0-7]
-HEX                     [0-9|a-f|A-F]
-
-UNICODE_CHAR            [^\n]
-OCT_BYTE                ["\\"]OCT{3}
-HEX_BYTE                ["\\"]["x"]HEX{2}
-LITTLE_U                ["\\"]["u"]HEX{4}
-BIG_U                   ["\\"]["U"]HEX{8}
-ESCAPED_CHAR            ["\\"][ "a" | "b" | "f" | "n" | "r" | "t" | "v" | "\\" | "'" | "\""]
-BYTE                    OCT_BYTE | HEX_BYTE
-UNICODE_VALUE           UNICODE_CHAR | LITTLE_U | BIG_U | ESCAPED_CHAR
-RUNE                    \'( UNICODE_VALUE|BYTE)\'
+    
+underscore                  [_]
+digit                       [0-9]
+digits                      {digit}+
+letter                      [a-zA-Z]
+optionalFraction            (\.{digits})?
+optionalExponent            ([Ee][+-]?{digits})?
+intNumber                   {digits}
+floatNumber                 {digits}{optionalFraction}{optionalExponent}
+identifier                  ({letter}|{underscore})({letter}|{digits}|{underscore})*
+custom_type                 ({letter}|{underscore})({letter}|{digits}|{underscore})*
+types                       (int|bool|float|string|char|custom_type)
 
 
-NEW_LINE                [\n]
-VAR_TYPE                "bool"|"byte"|"error"|"float32"|"float64"|"int"|"int8"|"int16"|"int32"|"int64"|"rune"|"string"|"uint"|"uint8"|"uint16"|"uint32"|"uint64"|"uintptr"|complex64|complex128
-BOOL_CONST              "true"|"false"
-NIL_VAL                 "nil"
-
-ASTERISK                "*"
-EQUAL                   "="
-
-CURLY_BRACKET_LEFT      "{"
-CURLY_BRACKET_RIGHT     "}"
-REGULAR_BRACKET_LEFT    "("
-REGULAR_BRACKET_RIGHT   ")"
-SQUARE_BRACKET_LEFT     "["
-SQUARE_BRACKET_RIGHT    "]"
-
-%Start out_com in_single in_multi
 %%
-                        BEGIN out_com;
-               
-<out_com>"/*"           BEGIN in_multi;
-<in_multi>.|\n          ;
-<in_multi>"*/"          BEGIN in_single;
 
-<out_com>"//"           BEGIN in_single;
-<in_single>.            ;
-<in_single>\n           BEGIN out_com;
+\n  						                 {++yylineno;}
+\/\/(.*)                                     {;}
+\/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\/  {for(int i = 0; i < strlen(yytext); i++)if(yytext[i] == '\n'){ ++yylineno;}}
 
-<out_com>"~"                            return TILDE;
-<out_com>"->"                           return ARROW;
-<out_com>"<-"                           return BACK_ARROW;
-<out_com>":="                           return DEFINE;
-<out_com>"..."                          return ELLIPSIS;
-<out_com>","                            return COMMA;
-<out_com>";"                            return SEMICOLON;
-<out_com>":"                            return COLON;
-<out_com>"."                            return PERIOD;
+ /* SPACE REMOVAL */
 
-<out_com>"package"                      return PACKAGE;
-<out_com>"interface"                    return INTERFACE;
-<out_com>"map"                          return MAP;
-<out_com>"goto"                         return GOTO;
-<out_com>"fallthrough"                  return FALLTHROUGH;
-<out_com>"defer"                        return DEFER;
-<out_com>"chan"                         return CHAN;
-<out_com>"import"                       return IMPORT;
-<out_com>"func"                         return FUNC;
-<out_com>"break"                        return BREAK;
-<out_com>"case"                         return CASE;
-<out_com>"const"                        return CONST;
-<out_com>"continue"                     return CONTINUE;
-<out_com>"default"                      return DEFAULT;
-<out_com>"else"                         return ELSE;
-<out_com>"for"                          return FOR;
-<out_com>"go"                           return GO;
-<out_com>"if"                           return IF;
-<out_com>"range"                        return RANGE;
-<out_com>"return"                       return RETURN;
-<out_com>"struct"                       return STRUCT;
-<out_com>"switch"                       return SWITCH;
-<out_com>"type"                         return TYPE;
-<out_com>"var"                          return VAR;
-
-<out_com>{VAR_TYPE}                     return VAR_TYPE;
-<out_com>{BOOL_CONST}                   return BOOL_CONST;
-<out_com>{NIL_VAL}                      return NIL_VAL;
-
-<out_com>{ASTERISK}                     return ASTERISK;
-
-<out_com>"+"				{;return MATH_SIGN;}
-<out_com>"-"				{;return MATH_SIGN;}
-<out_com>"/"				{;return MATH_SIGN;}
-<out_com>"%"				{;return MATH_SIGN;}
-
-<out_com>"&&"				{;return COMPARISON_SIGN;}
-<out_com>"||"				{;return COMPARISON_SIGN;}
-<out_com>"++"				{;return UNO_OPERATION;}
-<out_com>"--"				{;return UNO_OPERATION;}
+\t 						                     {;}
+[ ] 					                     {;}
+\r                                           {;}
+\f                                           {;}
 
 
-<out_com>"=="			{;return LOGICAL_SING;}
-<out_com>">"				{;return LOGICAL_SING;}
-<out_com>"<"				{;return LOGICAL_SING;}
-<out_com>"!"				{;return LOGICAL_SING;}
 
-<out_com>"!="			{;return LOGICAL_EQ_SING;}
-<out_com>"<="			{;return LOGICAL_EQ_SING;}
-<out_com>">="			{;return LOGICAL_EQ_SING;}
+ /* RESERVED "KEYWORD"S */
+package[ ][a-z_]* 		                     {return T_PACKAGE;}
+main					                     {return T_MAIN;}
+func					                     {return T_FUNC;}
+Println                 	                 {return T_PRINT;}
+fmt                      	                 {return T_FMT;}     
+var						                     {return T_VAR;}
+int						                     {return T_INT;}
+string					                     {return T_STR;}
+float64                                      {return T_FLT64;}                                            
+bool                                         {return T_BOOL;}
+fallthrough                                  {return T_FALLTHROUGH;}
+default                                      {return T_DEFAULT;}
+switch                                       {return T_SWITCH;}
+case                                         {return T_CASE;}
+repeat                                       {return T_REPEAT;}
+until                                        {return T_UNTIL;}
+import                                       {return T_IMPORT;}
+return                                       {return T_RETURN;}
+type                                         {return T_TYPE;}
+struct                                       {return T_STRUCT;}
 
-<out_com>{EQUAL}                        return EQUAL;
 
-<out_com>{CURLY_BRACKET_LEFT}           return CURLY_BRACKET_LEFT;
-<out_com>{CURLY_BRACKET_RIGHT}          return CURLY_BRACKET_RIGHT;
-<out_com>{REGULAR_BRACKET_LEFT}         return REGULAR_BRACKET_LEFT;
-<out_com>{REGULAR_BRACKET_RIGHT}        return REGULAR_BRACKET_RIGHT;
-<out_com>{SQUARE_BRACKET_LEFT}          return SQUARE_BRACKET_LEFT;
-<out_com>{SQUARE_BRACKET_RIGHT}         return SQUARE_BRACKET_RIGHT;
+ /* "OPERATOR"S */
+"+="					                     {return T_SPLUS;}
+"-="					                     {return T_SMINUS;}
+"*="					                     {return T_SMUL;}
+"/="					                     {return T_SDIV;}
+"%="					                     {return T_SMOD;}
+"&="					                     {return T_SAND;}
+"^="					                     {return T_SOR;}
+"|="					                     {return T_SOR;}                     
+"!="				                         {return T_NOTEQ;}
+"=="				                         {return T_COMP;}
+"<="				                         {return T_LTE;}
+">="				                         {return T_GTE;}
+"&&"				                         {return T_AND;}
+"||"				                         {return T_OR;}
+"<<"					                     {return T_LSHIFT;}
+">>"					                     {return T_RSHIFT;}
+"+"                                          {return T_PLUS;}
+"-"                                          {return T_MINUS;}
+"/"                                          {return T_DIV;}
+"*"                                          {return T_MUL;}
+"%"					                         {return T_MOD;}
+"<"					                         {return T_LT;}
+">"					                         {return T_GT;}
+"="					                         {return T_ASSIGN;}
+":="                                         {return T_WALRUS;}
+"!"					                         {return T_BNOT;}
+"&"					                         {return T_BAND;}
+"|"					                         {return T_BOR;}
+"^"					                         {return T_BXOR;}
 
-<out_com>{LETTER}({LETTER}|{DIGIT}|_)*                               return IDENTIFIER;
-<out_com>[+-]?{DIGIT}+                                               return INTEGER;
-<out_com>[+-]?{DIGIT}+(\.{DIGIT}+)?([Ee][+-]?{DIGIT}+)?              return FLOAT;
 
-<out_com>\"([^\\\n\"]|(\\.))*\"|\`(.)*\`                             return STRING;
-<out_com>{LETTER}({LETTER}|{DIGIT}|_)*\[{DIGIT}*\]                   return ARR;
-<out_com>"\n"                gLineNum++;
-<out_com>"\t"                ;
-<out_com>" "                 ;
-<out_com>.                   printf("ERROR : unexpected character in line %d\n",yylineno);
-<out_com><<EOF>>             {gLineNum++; return END_OF_FILE;}
+ /* "SEPARATOR"S */
+
+";"					                         {return T_SEMI;}
+","			                                 {return T_COMMA;}
+":"                                          {return T_COLON;}
+"("					                         {return T_PAREN_OPEN;}
+")"					                         {return T_PAREN_CLOSE;}
+"{"					                         {return T_CURLY_OPEN;}
+"}"					                         {return T_CURLY_CLOSE;}
+"["					                         {return T_BRACKET_OPEN;}
+"]"					                         {return T_BRACKET_CLOSE;}
+"."					                         {return T_DOT;}
+
+
+
+ /* "LITERAL"S */
+false                                        {return T_FALSE;}
+true                                         {return T_TRUE;}
+{intNumber}                                  {return T_INTEGER;}
+\"([^"\n])*(\n)([^"])*\"                     {printf("\033[0;31mERROR at line number : %d\n \033[0;0m Invalid String : \033[0;35m%s\033[0;0m\n Strings cannot contain newlines. \n\n", yylineno, yytext);
+                                                int found=-1;
+                                                int first = -1;
+                                                for(int i =0;i<strlen(yytext);++i){
+                                                    if(yytext[i]==10){
+                                                        found = i;
+                                                        if (first==-1)
+                                                            first = i;
+                                                        ++yylineno;
+                                                    }
+                                                }
+                                                yytext[first]='\0';
+                                                return T_STRING;
+                                             }
+\"[^"]*\"				                     {return T_STRING;}
+{floatNumber}                                {return T_FLOAT64;}
+map\[{types}\]{types}                        {return T_MAP;}
+\[\]{types}                                  {return T_ARR;}
+
+
+
+
+
+{identifier}			                     {return T_IDENTIFIER;}
+
+
+ /* For any other token print error */
+.                                            {   
+                                                 printf("\033[0;31m");
+                                                 printf("ERROR");
+                                                 printf("\033[0m");
+                                                 printf(" : Unexpected character \033[0;35m%s\033[0m at \033[0;33mline number %d\033[0m, could not classify as any token.\n\n", yytext ,yylineno);
+                                             }
+
+
+
 %%
+
+int yywrap(){
+    return 1;
+}
