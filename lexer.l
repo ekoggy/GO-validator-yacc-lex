@@ -4,7 +4,6 @@
 #include "parcer.h"
 extern int yyscope;
 extern int yylineno;
-
 %}
     
 underscore                  [_]
