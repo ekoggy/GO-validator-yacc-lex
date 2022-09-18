@@ -16,6 +16,7 @@
     int yyscope=0;
     int flag=0;
     int valid=1;
+    int linecounter = 0;
     
     struct quad{
         char op[100];
@@ -61,7 +62,7 @@
 
 %token T_PACKAGE T_MAIN T_FUNC T_PRINT T_VAR T_TYPE T_RETURN
 
-%token T_FALLTHROUGH T_DEFAULT T_SWITCH T_CASE T_REPEAT T_UNTIL T_IMPORT T_FMT T_STRUCT
+%token T_FALLTHROUGH T_DEFAULT T_SWITCH T_CASE T_REPEAT T_UNTIL T_IMPORT T_FMT T_STRUCT T_ENTER
 %token T_COMMA T_COLON T_PAREN_OPEN T_PAREN_CLOSE T_CURLY_OPEN T_CURLY_CLOSE T_BRACKET_OPEN T_BRACKET_CLOSE T_DOT T_END_OF_STROKE
 %token T_SPLUS T_SMINUS T_SMUL T_SDIV T_SMOD T_SAND T_SOR  T_LSHIFT T_RSHIFT T_PLUS T_MINUS T_DIV T_MUL T_MOD T_WALRUS  T_BAND T_BOR T_BXOR 
 
@@ -83,40 +84,66 @@
 
 %%
 
-program                         : T_PACKAGE imports struct body
+program                         : T_PACKAGE import external body
                                 |
                                 ;
 
-imports                         : import imports
+external                        : struct external
+                                | var external
                                 |
                                 ;
 
-import                          : T_IMPORT importname
-                                | T_IMPORT T_PAREN_OPEN importnames T_PAREN_CLOSE
-                                | T_IMPORT T_PAREN_OPEN importnames 
-                                | T_IMPORT importnames T_PAREN_CLOSE 
-                                ;
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-struct							: T_TYPE T_IDENTIFIER T_STRUCT T_CURLY_OPEN structContent T_CURLY_CLOSE struct
-								|
+/********************IMPORTS********************/
+import							: T_IMPORT T_PAREN_OPEN importContent T_PAREN_CLOSE semi
+								| T_IMPORT T_STRING import semi
+                                |
 								;
 								
-structContent					: T_IDENTIFIER type structComma
+importContent					: T_STRING {if(linecounter == yylineno) yyerror("syntax"); linecounter = yylineno;} importComma 
+								;
+								
+importComma						: importContent             
+                                | {linecounter = 0;} T_SEMI importContent
+								| {linecounter = 0;}
+								;
+
+
+/**********************VARS**********************/
+var							    : T_VAR T_PAREN_OPEN varContent T_PAREN_CLOSE semi 
+							    | T_VAR T_IDENTIFIER varExpression semi 
+                            
+								;
+								
+varContent					    : T_IDENTIFIER{if(linecounter == yylineno) yyerror("syntax"); linecounter = yylineno;} varExpression varComma 
+								;
+								
+varComma						: varContent             
+                                | {linecounter = 0;} T_SEMI varContent
+								| {linecounter = 0;}
+								;
+
+varExpression                   : type T_ASSIGN value
+                                | T_ASSIGN value
+                                | type
+                                ;
+
+/**********************STRUCTS**********************/
+
+struct							: T_TYPE T_IDENTIFIER T_STRUCT T_CURLY_OPEN structContent T_CURLY_CLOSE semi
+								
+								;
+								
+structContent					: T_IDENTIFIER {if(linecounter == yylineno) yyerror("syntaxxxx"); linecounter = yylineno;} type structComma
 								;
 								
 structComma						: structContent
-								| T_COMMA structContent
-								|
+								| {linecounter = 0;} T_SEMI structContent
+								| {linecounter = 0;}
 								;
-								
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-importnames                     : importname
-                                | importname importnames
-                                ;
 
-importname                      :T_STRING
-                                ;
+
+
+
 
 semi                            : T_SEMI
                                 | /* EPSILON */
@@ -159,6 +186,9 @@ functionDefinition              : T_FUNC T_IDENTIFIER {++functionid;functions[fu
                                 }
                                 ;
 
+receiver                        : T_PAREN_OPEN type T_PAREN_CLOSE
+                                |;
+
 parameterlist                   : parameters
                                 { strcpy($$,$1); }
                                 | {strcpy($$,"");}
@@ -200,7 +230,11 @@ returntype                      : type {strcpy($$,$1);}
                                 | {strcpy($$,"");}
                                 ;
 
-type                            : T_INT    
+type                            : T_MUL ntype
+                                | ntype
+                                ;
+
+ntype                           : T_INT    
                                 | T_STR    
                                 | T_FLT64
                                 | T_BOOL
@@ -781,6 +815,7 @@ arg                             : T_IDENTIFIER
 
 extern void yyerror(char* si){
     printf("%s at line number %d\n",si,yylineno);
+    printf("Last token %s\n",yytext);
     valid=0;
 }
 
@@ -904,9 +939,19 @@ void repeatUntilGen(char arg1[100]){
     strcpy(QUAD[Ind2].result,QUAD[Ind3].result);
 }
 
-int main(){
+int main(int argc, char * argv[]){
+    if(argc >=2){
+        yyin=fopen(argv[1],"r");
+        if(!yyin){
+            printf("Can't open input file!\n");
+            exit(-1);
+        }
+    }
+    else{
+        printf("The input file was expected!\n");
+    }
     //yydebug = 1;
-    int accepted=yyparse();
+    int accepted = yyparse();
     if(accepted==0 && valid!=0)
         printf("[+] Test passed\n");
     else
