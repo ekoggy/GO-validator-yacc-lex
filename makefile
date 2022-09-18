@@ -1,14 +1,16 @@
 .PHONY : build clean all
 
 build: 
-	bison -d analyser.y
-	lex lexer.l
-	g++ lex.yy.c y.tab.c grammar.cpp y.tab.h grammar.h -o validator
-	./validator <config.in
+	bison -o parcer.c -d analyser.y
+	lex -o lexer.c lexer.l 
+	gcc lexer.c parcer.c parcer.h -o validator
 
 clean:
-	rm -f -d y.tab.*
 	rm -f -d lex.yy.c
 	rm -f -d validator
+	rm -f -d parcer.*
 
-all: clean build
+run:
+	./validator <config.in out
+
+all: clean build run
