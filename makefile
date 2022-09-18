@@ -10,7 +10,4 @@ clean:
 	rm -f -d validator
 	rm -f -d parcer.*
 
-run:
-	./validator <config.in out
-
-all: clean build run
+all: clean build
