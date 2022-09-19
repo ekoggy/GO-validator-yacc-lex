@@ -198,7 +198,7 @@ statement                       : return
                                 | variableAssignment
                                 | arrayAssignment
                                 | cicles
-//                               | ifelse
+                                | ifelse
                                 ;
 
 
@@ -365,8 +365,43 @@ cicleBody                       : T_CURLY_OPEN statement T_CURLY_CLOSE
 
 
 //If-else constructions
-//ifelse                          :
-//                               ;
+ifelse                          : T_IF if ifBody
+                                ;
+
+if                              : ifVar T_SEMI ifcondition
+                                | ifcondition
+                                ;
+
+ifVar                           : T_IDENTIFIER T_WALRUS expressions
+                                ;
+
+ifcondition                     : ifCharacter relationalOperator ifComma
+                                ;
+
+ifComma                         : ifCharacter addOperators ifcondition;
+                                | ifCharacter
+                                ;
+
+addOperators                    : T_AND
+                                | T_OR
+                                ;
+
+ifCharacter                     : T_BNOT ifTypes
+                                | ifTypes
+                                ;        
+
+ifTypes                         : functions
+                                | T_IDENTIFIER
+                                | T_INTEGER
+                                | T_FLOAT64
+                                | T_STRING
+                                ;                      
+
+ifBody                          : T_CURLY_OPEN statement T_CURLY_CLOSE
+                                |
+                                ;
+
+
 
 
 expressions                     : arithmeticExpression 
