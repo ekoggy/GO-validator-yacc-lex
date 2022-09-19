@@ -35,9 +35,7 @@ types                       (int|bool|float|string|char|identifier)
 
  /* RESERVED "KEYWORD"S */
 package[ ][a-z_]* 		                     {return T_PACKAGE;}
-main					                     {return T_MAIN;}
 func					                     {return T_FUNC;}
-Println                 	                 {return T_PRINT;}
 fmt                      	                 {return T_FMT;}     
 var						                     {return T_VAR;}
 int						                     {return T_INT;}
@@ -54,7 +52,8 @@ import                                       {return T_IMPORT;}
 return                                       {return T_RETURN;}
 type                                         {return T_TYPE;}
 struct                                       {return T_STRUCT;}
-
+if                                           {return T_IF;}
+break                                        {return T_BREAK;}
 
  /* "OPERATOR"S */
 "+="					                     {return T_SPLUS;}
