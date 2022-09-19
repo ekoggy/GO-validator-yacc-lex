@@ -23,7 +23,7 @@
     }
 %start program
 
-%token T_PACKAGE T_MAIN T_FUNC T_PRINT T_VAR T_TYPE T_RETURN T_IF T_BREAK
+%token T_PACKAGE T_MAIN T_FUNC T_PRINT T_VAR T_TYPE T_RETURN T_IF T_BREAK T_FOR T_ELSE T_UNDER
 %token T_FALLTHROUGH T_DEFAULT T_SWITCH T_CASE T_REPEAT T_UNTIL T_IMPORT T_FMT T_STRUCT T_ENTER
 %token T_COMMA T_COLON T_PAREN_OPEN T_PAREN_CLOSE T_CURLY_OPEN T_CURLY_CLOSE T_BRACKET_OPEN T_BRACKET_CLOSE T_DOT T_END_OF_STROKE
 %token T_SPLUS T_SMINUS T_SMUL T_SDIV T_SMOD T_SAND T_SOR  T_LSHIFT T_RSHIFT T_PLUS T_MINUS T_DIV T_MUL T_MOD T_WALRUS  T_BAND T_BOR T_BXOR 
@@ -71,10 +71,15 @@ ntype                           : T_INT
                                 | T_FLT64
                                 | T_BOOL
                                 | T_MAP 
-                                | T_ARR
                                 | T_IDENTIFIER
                                 ;
 
+value          	                : T_INTEGER
+                                | T_FLOAT64
+                                | T_STRING
+                                | T_TRUE
+                                | T_FALSE
+                                ;
 
 
 /********************IMPORTS********************/
@@ -110,8 +115,20 @@ varComma						: varContent
 varExpression                   : type T_ASSIGN value
                                 | T_ASSIGN value
                                 | type
+                                | T_BRACKET_OPEN extArraylength T_BRACKET_CLOSE type extArrDefinition semi
+                                ;
+ 
+extArrDefinition                : T_CURLY_OPEN extArrayvalues T_CURLY_CLOSE
+                                |
+                                ;
+ 
+extArraylength                  : number
+                                |
                                 ;
 
+extArrayvalues                  : value
+                                | arrayvalues T_COMMA value
+                                ;
 
 
 /**********************STRUCTS**********************/
@@ -131,14 +148,16 @@ structComma						: structContent
 
 /**********************FUNCTIONS**********************/
 //definition
-func                            : T_FUNC{linecounter = yylineno;} receiver T_IDENTIFIER parameters returnvalue functext;
+func                            : T_FUNC{linecounter = yylineno;} receiver T_IDENTIFIER parameters returnvalue functext
+                                ;
 
 //function receiver
 receiver                        : T_PAREN_OPEN T_IDENTIFIER type T_PAREN_CLOSE
                                 |;
 
 //input parameters
-parameters                      : T_PAREN_OPEN parameterlist T_PAREN_CLOSE;
+parameters                      : T_PAREN_OPEN parameterlist T_PAREN_CLOSE
+                                ;
 
 parameterlist                   : parameter
                                 |
@@ -175,11 +194,16 @@ statement                       : return
                                 | functions
                                 | variables
                                 | switch
+                                | arrays
+                                | variableAssignment
+                                | arrayAssignment
+                                | cicles
+//                               | ifelse
                                 ;
 
 
 //return
-return                             : T_RETURN returnStatement
+return                          : T_RETURN returnStatement
                                 ;
 
 returnStatement                 : expressions funcreturncomma
@@ -192,7 +216,7 @@ funcreturncomma                 : T_COMMA returnStatement
 
 
 //calling function
-functions                        : T_IDENTIFIER T_PAREN_OPEN argslist T_PAREN_CLOSE
+functions                       : T_IDENTIFIER T_PAREN_OPEN argslist T_PAREN_CLOSE
                                 ;
 
 argslist                        : args
@@ -206,6 +230,7 @@ args                            : arg
 arg                             : T_IDENTIFIER
                                 | value
                                 | functions
+                                | array
                                 ;
 
 
@@ -260,6 +285,88 @@ switchEnd                       : T_BREAK
                                 ;
 
 
+//Arrays defifnitions
+arrays                          : T_VAR array type arrDerinition semi
+                                | T_IDENTIFIER T_WALRUS T_BRACKET_OPEN arraylength T_BRACKET_CLOSE type arrDerinition semi
+                                ;
+ 
+array                           : T_IDENTIFIER T_BRACKET_OPEN arraylength T_BRACKET_CLOSE
+                                ;
+
+arrDerinition                   : T_CURLY_OPEN arrayvalues T_CURLY_CLOSE
+                                |
+                                ;
+
+arraylength                     : arithmeticExpression
+                                |
+                                ;
+
+arrayvalues                     : value
+                                | arrayvalues T_COMMA value
+                                ;
+
+
+//Variables assignments
+variableAssignment              : T_IDENTIFIER operator expressions semi
+                                ;
+
+operator                        : T_ASSIGN
+                                | T_SMINUS
+                                | T_SPLUS
+                                | T_SMOD
+                                | T_SMUL
+                                | T_SDIV
+                                ;
+
+
+
+//Arrays assignments
+arrayAssignment                 : array T_ASSIGN expressions semi
+                                ;
+
+
+//cicles
+cicles                          : T_FOR cicle cicleBody
+                                ;
+
+cicle                           : counter T_SEMI condition T_SEMI changer
+                                | T_SEMI condition T_SEMI
+                                | condition
+                                |
+                                ;
+
+counter                         : T_IDENTIFIER T_WALRUS number
+                                ;
+
+condition                       : cicleVariables relationalOperator cicleCounters
+                                ;
+
+cicleVariables                  : T_IDENTIFIER cicleComma
+                                | T_UNDER
+                                ;
+
+cicleComma                      : T_COMMA cicleVariables;
+                                |
+                                ;
+
+cicleCounters                   : functions
+                                | T_IDENTIFIER
+                                | T_INTEGER
+                                | T_FLOAT64
+                                | T_STRING
+                                ;                              
+
+changer                         : T_IDENTIFIER T_PLUS T_PLUS
+                                ;
+
+cicleBody                       : T_CURLY_OPEN statement T_CURLY_CLOSE
+                                |
+                                ;
+
+
+//If-else constructions
+//ifelse                          :
+//                               ;
 
 
 expressions                     : arithmeticExpression 
@@ -319,15 +426,6 @@ M                               : N T_OR M
 
 N                               : T_PAREN_OPEN relationalExpression T_PAREN_CLOSE
                                 ;
-
-
-value          	                : T_INTEGER
-                                | T_FLOAT64
-                                | T_STRING
-                                | T_TRUE
-                                | T_FALSE
-                                ;
-
 
 %%
 

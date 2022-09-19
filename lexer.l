@@ -14,7 +14,7 @@ optionalFraction            (\.{digits})?
 optionalExponent            ([Ee][+-]?{digits})?
 intNumber                   {digits}
 floatNumber                 {digits}{optionalFraction}{optionalExponent}
-identifier                  [a-zA-Z_][a-zA-Z0-9_\.]*
+identifier                  [a-zA-Z][a-zA-Z0-9\.]*
 types                       (int|bool|float|string|char|identifier)
 
 
@@ -36,7 +36,6 @@ types                       (int|bool|float|string|char|identifier)
  /* RESERVED "KEYWORD"S */
 package[ ][a-z_]* 		                     {return T_PACKAGE;}
 func					                     {return T_FUNC;}
-fmt                      	                 {return T_FMT;}     
 var						                     {return T_VAR;}
 int						                     {return T_INT;}
 string					                     {return T_STR;}
@@ -54,6 +53,9 @@ type                                         {return T_TYPE;}
 struct                                       {return T_STRUCT;}
 if                                           {return T_IF;}
 break                                        {return T_BREAK;}
+for                                          {return T_FOR;}
+else                                         {return T_ELSE;}
+
 
  /* "OPERATOR"S */
 "+="					                     {return T_SPLUS;}
@@ -99,6 +101,7 @@ break                                        {return T_BREAK;}
 "["					                         {return T_BRACKET_OPEN;}
 "]"					                         {return T_BRACKET_CLOSE;}
 "."					                         {return T_DOT;}
+underscore                                   {return T_UNDER;}
 
 
 
@@ -123,7 +126,7 @@ true                                         {return T_TRUE;}
 \"[^"]*\"				                     {return T_STRING;}
 {floatNumber}                                {return T_FLOAT64;}
 map\[{types}\]{types}                        {return T_MAP;}
-\[\]{types}                                  {return T_ARR;}
+
 
 
 {identifier}			                     {return T_IDENTIFIER;}
