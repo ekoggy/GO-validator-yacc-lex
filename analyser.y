@@ -203,7 +203,7 @@ statement                       : return
 
 
 //return
-return                          : T_RETURN returnStatement
+return                          : T_RETURN returnStatement semi
                                 ;
 
 returnStatement                 : expressions funcreturncomma
@@ -236,12 +236,22 @@ arg                             : T_IDENTIFIER
 
 //variable defifnitions
 variables                       : T_VAR T_PAREN_OPEN funcVarContent T_PAREN_CLOSE semi
-                                | T_VAR T_IDENTIFIER type T_ASSIGN expressions semi
+                                | T_VAR T_IDENTIFIER type variableComma T_ASSIGN expressions semi
                                 | T_VAR T_IDENTIFIER type semi
-                                | T_VAR T_IDENTIFIER T_ASSIGN expressions semi
+                                | T_VAR T_IDENTIFIER variableComma T_ASSIGN expressions semi
                                 | T_IDENTIFIER T_WALRUS expressions semi
                                 ;
                 
+//////////////////////////////////////////////////////////////////////////////////////
+variableComma					: T_COMMA T_IDENTIFIER variableCommaType
+								| 
+								;
+								
+variableCommaType				: type
+								|
+								;
+//////////////////////////////////////////////////////////////////////////////////////
+				
 funcVarContent					: T_IDENTIFIER{if(linecounter == yylineno) yyerror("syntax"); linecounter = yylineno;} funcVarExpression funcVarComma 
 								;
 								
