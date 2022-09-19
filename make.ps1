@@ -12,7 +12,7 @@ if ($mode -eq "all" -or $mode -eq "clear")
 if ($mode -eq "all" -or $mode -eq "build")
 {
     echo "Build"
-    .\win_bison.exe -o parcer.c -d analyser.y 
+    .\win_bison.exe --verbose --debug -o parcer.c -d analyser.y 
     .\win_flex.exe -o lexer.c lexer.l
     gcc lexer.c parcer.c parcer.h -o validator
 }
