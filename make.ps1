@@ -7,7 +7,7 @@ if ($mode -eq "all" -or $mode -eq "clear")
     Remove-item parcer.c
     Remove-item parcer.h
     Remove-item validator.exe
-    Remove-item lex.yy.c
+    Remove-item lexer.c
 }
 if ($mode -eq "all" -or $mode -eq "build")
 {
