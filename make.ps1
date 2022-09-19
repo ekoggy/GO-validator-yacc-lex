@@ -1,13 +1,21 @@
 Param (
 [string]$mode = "all"
 )
-if ($mode -eq "all" -or $mode -eq "clear")
+$ErrorActionPreference = 'SilentlyContinue'
+if ($mode -eq "all" -or $mode -eq "clean")
 {
-    echo "Clear"
-    Remove-item parcer.c
-    Remove-item parcer.h
-    Remove-item validator.exe
-    Remove-item lexer.c
+    echo "Clean"
+    try{
+        Remove-item parcer.c
+        Remove-item parcer.h -f 
+        Remove-item parcer.output
+        Remove-item validator.exe
+        Remove-item lexer.c
+    }
+    catch
+    {
+        Write-Output "No cleaning required"
+    }
 }
 if ($mode -eq "all" -or $mode -eq "build")
 {

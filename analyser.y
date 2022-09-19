@@ -3,7 +3,6 @@
     #include<stdio.h>
     #include<stdlib.h>
     #include<string.h>
-    #include "symboltable.c"
 
     extern void yyerror(char* s); 
     extern int yylex();
