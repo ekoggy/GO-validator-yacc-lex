@@ -55,6 +55,9 @@ if                                           {return T_IF;}
 break                                        {return T_BREAK;}
 for                                          {return T_FOR;}
 else                                         {return T_ELSE;}
+defer                                        {return T_DEFER;}
+range                                        {return T_RANGE;}
+continue                                     {return T_CONTINUE;}
 
 
  /* "OPERATOR"S */
@@ -101,7 +104,7 @@ else                                         {return T_ELSE;}
 "["					                         {return T_BRACKET_OPEN;}
 "]"					                         {return T_BRACKET_CLOSE;}
 "."					                         {return T_DOT;}
-underscore                                   {return T_UNDER;}
+"_"                                          {return T_UNDER;}
 
 
 
@@ -124,6 +127,8 @@ true                                         {return T_TRUE;}
                                                 return T_STRING;
                                              }
 \"[^"]*\"				                     {return T_STRING;}
+\`.*\`                                       {return T_STRING;}
+\'.*\'                                       {return T_STRING;}
 {floatNumber}                                {return T_FLOAT64;}
 map\[{types}\]{types}                        {return T_MAP;}
 
