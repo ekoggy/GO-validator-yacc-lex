@@ -27,7 +27,7 @@
 %token T_FALLTHROUGH T_DEFAULT T_SWITCH T_CASE T_REPEAT T_UNTIL T_IMPORT T_FMT T_STRUCT T_ENTER T_RANGE
 %token T_COMMA T_COLON T_PAREN_OPEN T_PAREN_CLOSE T_CURLY_OPEN T_CURLY_CLOSE T_BRACKET_OPEN T_BRACKET_CLOSE T_DOT T_END_OF_STROKE
 %token T_SPLUS T_SMINUS T_SMUL T_SDIV T_SMOD T_SAND T_SOR  T_LSHIFT T_RSHIFT T_PLUS T_MINUS T_DIV T_MUL T_MOD T_WALRUS  T_BAND T_BOR T_BXOR 
-
+%token T_ARROW T_MAKE T_CHAN T_GO T_SELECT T_CLOSE
 
 %token <str> T_FALSE T_TRUE
 %token <str> T_INTEGER
@@ -62,29 +62,40 @@ semi                            : T_SEMI
                                 | /* EPSILON */
                                 ;
 
-type                            : T_MUL ntype
-                                | ntype
+type                            : pointerType
+                                | T_BRACKET_OPEN T_BRACKET_CLOSE pointerType
+                                | T_BRACKET_OPEN T_INTEGER T_BRACKET_CLOSE pointerType
                                 ;
 
-ntype                           : T_INT    
+pointerType                     : T_MUL commonType
+                                | commonType
+                                ;
+
+commonType                      : T_INT    
                                 | T_STR    
                                 | T_FLT64
                                 | T_BOOL
                                 | T_MAP 
                                 | id
-                                | T_BRACKET_OPEN T_BRACKET_CLOSE ntype
                                 ;
 
 id                              : T_IDENTIFIER
                                 | T_BAND T_IDENTIFIER
                                 ;
 
-value          	                : T_INTEGER
-                                | T_FLOAT64
+value          	                : number
                                 | T_STRING
-                                | T_TRUE
+                                | bool
+                                ;
+                                
+number                          : T_INTEGER
+                                | T_FLOAT64
+                                ;
+
+bool                            : T_TRUE
                                 | T_FALSE
                                 ;
+
 
 
 /********************IMPORTS********************/
@@ -141,6 +152,7 @@ extArrayvalues                  : value
                                 ;
 
 
+
 /**********************STRUCTS**********************/
 
 struct							: T_TYPE T_IDENTIFIER T_STRUCT T_CURLY_OPEN structContent T_CURLY_CLOSE semi
@@ -165,16 +177,18 @@ structComma						: structContent
 
 /**********************FUNCTIONS**********************/
 //definition
+shortFunc                       :T_FUNC{linecounter = yylineno;} parameters functext
+
 func                            : T_FUNC{linecounter = yylineno;} receiver funcname parameters returnvalue functext
                                 ;
 
 funcname                        : T_IDENTIFIER
-                                |
                                 ;
 
 //function receiver
 receiver                        : T_PAREN_OPEN T_IDENTIFIER type T_PAREN_CLOSE
-                                |;
+                                |
+                                ;
 
 
 //input parameters
@@ -220,26 +234,44 @@ statements                      : statement statements
                                 ;
 
 statement                       : return
+                                | if
+                                | arrays
                                 | functions
                                 | variables
                                 | switch
-                                | arrays
                                 | variableAssignment
                                 | arrayAssignment
                                 | cicles
-                                | ifelse
                                 | defer
                                 | T_BREAK
                                 | repeat
-                                | continue
+                                | T_CONTINUE
                                 ;
 
 
-//Continue construction
-continue                        : T_CONTINUE
+
+/**********************IF-ELSE**********************/
+if                              : T_IF ifHead ifBody else
                                 ;
 
-//repeat construction
+ifHead                          : variableAssignment expressions
+                                | expressions
+                                ;
+
+ifBody                          : T_CURLY_OPEN statements T_CURLY_CLOSE
+                                ;
+
+else                            : T_ELSE elseEnd
+                                |
+                                ;
+
+elseEnd                         : if
+                                | ifBody
+                                ;
+
+
+
+/**********************REPEAT**********************/
 repeat                          : T_REPEAT T_CURLY_OPEN statements T_CURLY_CLOSE T_UNTIL repCondition
                                 ;
 
@@ -248,12 +280,14 @@ repCondition                    : T_PAREN_OPEN expressions T_PAREN_CLOSE
                                 ;
 
 
-//defer
+
+/**********************DEFER**********************/
 defer                           : T_DEFER functions
                                 ;
 
 
-//return
+
+/**********************RETURN**********************/
 return                          : T_RETURN returnStatement semi
                                 ;
 
@@ -265,35 +299,38 @@ funcreturncomma                 : T_COMMA returnStatement
                                 ;
 
 
-//calling function
-functions                       : T_IDENTIFIER T_PAREN_OPEN argslist T_PAREN_CLOSE funcDot semi
+
+/**********************CALLING FUNCTIONS**********************/
+functions                       : T_IDENTIFIER argslist funcDot semi
                                 ;
 
 funcDot                         : T_DOT functions
                                 |
                                 ;
 
-argslist                        : args
-                                | 
+argslist                        : T_PAREN_OPEN args T_PAREN_CLOSE
+                                | T_PAREN_OPEN  T_PAREN_CLOSE
                                 ;
 
-args                            : arg
-                                | args T_COMMA arg
+args                            : arg argsEnd
                                 ;
 
-arg                             : id
-                                | value
-                                | functions
-                                | array
-                                | func 
+argsEnd                         : T_COMMA args
+                                |
+                                ;
+
+arg                             : expressions
+                                | shortFunc
+                                | structures
                                 ;
 
 
-//variable defifnitions
+
+/**********************VARIABLE DECLARATION**********************/
 variables                       : T_VAR T_PAREN_OPEN funcVarContent T_PAREN_CLOSE semi
                                 | T_VAR funcVarIdentifier type varEnd semi
-                                | T_VAR T_IDENTIFIER T_ASSIGN expressions semi
-                                | T_IDENTIFIER T_WALRUS expressions semi
+                                | T_VAR T_IDENTIFIER T_ASSIGN expressions semi                                
+                                | T_VAR T_IDENTIFIER T_ASSIGN structures semi
                                 ;
 
 varEnd                          : T_ASSIGN expressions
@@ -318,7 +355,8 @@ funcVarExpression               : type T_ASSIGN value
                                 ;
 
 
-//switch constructions
+
+/**********************SWITCH**********************/
 switch                          : T_SWITCH switchCondition semi T_CURLY_OPEN switchCaseStatements T_CURLY_CLOSE semi
                                 ;
 
@@ -347,9 +385,9 @@ switchEnd                       : T_BREAK
                                 ;
 
 
-//Arrays defifnitions
+
+/**********************ARRAY DECLARATION**********************/
 arrays                          : T_VAR array type arrDerinition semi
-                                | T_IDENTIFIER T_WALRUS T_BRACKET_OPEN arraylength T_BRACKET_CLOSE type arrDerinition semi
                                 ;
  
 array                           : T_IDENTIFIER T_BRACKET_OPEN arraylength T_BRACKET_CLOSE
@@ -359,7 +397,7 @@ arrDerinition                   : T_CURLY_OPEN arrayvalues T_CURLY_CLOSE
                                 |
                                 ;
 
-arraylength                     : arithmeticExpression
+arraylength                     : ariphmetic
                                 |
                                 ;
 
@@ -367,12 +405,22 @@ arrayvalues                     : value
                                 | arrayvalues T_COMMA value
                                 ;
 
+shortArray                      : T_BRACKET_OPEN arraylength T_BRACKET_CLOSE pointerType T_CURLY_OPEN expressions T_CURLY_CLOSE
+                                | T_BRACKET_OPEN arraylength T_BRACKET_CLOSE pointerType T_CURLY_OPEN structFilling T_CURLY_CLOSE
+                                | T_BRACKET_OPEN arraylength T_BRACKET_CLOSE pointerType T_CURLY_OPEN T_CURLY_CLOSE
+                                | T_BRACKET_OPEN arraylength T_BRACKET_CLOSE pointerType
 
-//Variables assignments
-variableAssignment              : varIdentifier operator expressions varExpr semi
+
+/**********************VARIABLE ASSIGNMENT**********************/
+variableAssignment              : varIdentifier operator variableEx varExpr semi
                                 ;
 
-varExpr                         : T_COMMA expressions varExpr
+variableEx                      : shortArray
+                                | structures
+                                | expressions
+                                ;
+
+varExpr                         : T_COMMA variableEx varExpr
                                 |
                                 ;
 
@@ -387,12 +435,13 @@ operator                        : T_WALRUS
 
 
 
-//Arrays assignments
+/**********************ARRAY ASSIGNMENT**********************/
 arrayAssignment                 : array T_ASSIGN expressions semi
                                 ;
 
 
-//cicles
+
+/**********************CICLES**********************/
 cicles                          : T_FOR cicle cicleBody semi
                                 ;
 
@@ -408,7 +457,7 @@ counter                         : T_IDENTIFIER T_WALRUS number
 condition                       : cicleVariables conditionOperator cicleCounters
                                 ;
 
-conditionOperator               : relationalOperator
+conditionOperator               : expressionSign
                                 | T_WALRUS
                                 ;
 
@@ -440,178 +489,116 @@ cicleBody                       : T_CURLY_OPEN statements T_CURLY_CLOSE
                                 ;
 
 
-//If-else constructions
-ifelse                          : T_IF if ifBody elseCase
+
+/**********************STRUCT ASSIGNMENT**********************/
+
+structures                      : T_IDENTIFIER structExpression
+                                | T_BAND T_IDENTIFIER structExpression
                                 ;
 
-elseCase                        : T_ELSE elseAction
+structExpression                : T_CURLY_OPEN structFilling T_CURLY_CLOSE
+                                ;
+
+structFilling                   : doubleFilling
+                                | onceFilling
                                 |
                                 ;
 
-elseAction                      : ifBody
-                                | ifelse
+doubleFilling                   : T_IDENTIFIER T_COLON logic doubleFillingEnd
+                                | T_IDENTIFIER T_COLON structures doubleFillingEnd
+                                | T_IDENTIFIER T_COLON functions doubleFillingEnd
                                 ;
 
-if                              : ifIdentifier ifSign expressions T_SEMI ifIdentifier ifCompare expressions
-                                | ifIdentifier ifCompare expressions
-                                | ifIdentifier
-                                | functions
+doubleFillingEnd                : T_COMMA doubleFilling
+                                | T_COMMA
+                                |
                                 ;
 
-ifSign                          : T_ASSIGN
-                                | T_WALRUS
+onceFilling                     : logic onceFillingEnd
+                                | structures onceFillingEnd
+                                | functions onceFillingEnd
                                 ;
 
-ifCompare                       : T_NOTEQ
+onceFillingEnd                  : T_COMMA onceFilling  
+                                | T_COMMA
+                                |
+                                ;
+
+
+/**********************OTHER CONSTRUCTIONS**********************/
+expressions                     : expression expressionEnd
+                                ;
+
+expressionEnd                   : expressionSign expressions   
+                                |
+                                ;
+
+expressionSign                  : T_SAND
+                                | T_SOR
+                                | T_NOTEQ
                                 | T_COMP
                                 | T_LTE
                                 | T_GTE
+                                | T_AND
+                                | T_OR
                                 | T_LT
                                 | T_GT
                                 ;
 
-
-ifDefine                        : ifIdentifier T_ASSIGN ifVar
-                                | ifIdentifier T_WALRUS ifVar
-                                |
+expression                      : T_BNOT exprWithoutNot 
+                                | exprWithoutNot
                                 ;
 
-ifVar                           : expressions varExpr T_SEMI 
-                                ;
-
-ifIdentifier                    : T_BNOT T_IDENTIFIER ifNext
-                                | T_IDENTIFIER ifNext
-                                | T_UNDER ifNext
-                                |
-                                ;
-
-ifNext                          : T_COMMA ifIdentifier
-                                ;
-
-ifcondition                     : relationalOperator ifComma
-                                |
-                                ;
-
-ifComma                         : ifCharacter addOperators ifcondition;
-                                | ifCharacter
-                                ;
-
-addOperators                    : T_AND
-                                | T_OR
-                                ;
-
-ifCharacter                     : T_BNOT ifTypes
-                                | ifTypes
-                                ;        
-
-ifTypes                         : functions
-                                | T_IDENTIFIER
-                                | T_INTEGER
-                                | T_FLOAT64
-                                | T_STRING
-                                | T_FALSE
-                                | T_TRUE
-                                ;                      
-
-ifBody                          : T_CURLY_OPEN statements T_CURLY_CLOSE
-                                ;
-
-
- 
-
-
-expressions                     : arithmeticExpression
-                                | logicalExpression
-                                | relationalExpression
+exprWithoutNot                  : logic
                                 | functions
-                                | structures
-                                | arrs
-                                | convertType
-                                | concat
                                 ;
 
-concat                          : T_STRING T_PLUS T_STRING concat
-                                | T_PLUS T_STRING concat
+
+logic                           : logicComponent logicEnd
                                 ;
 
-convertType                     : type T_PAREN_OPEN contentStructComma T_PAREN_CLOSE
-                                ;
-
-arrs                            : T_BRACKET_OPEN T_BRACKET_CLOSE type curly
-                                ;
-
-curly                           : T_CURLY_OPEN arrContent T_CURLY_CLOSE
-                                ;
-
-arrContent                      : value contentStructComma arrComma
+logicEnd                        : T_BAND logic
+                                | T_BOR logic
+                                | T_BXOR logic
                                 |
                                 ;
 
-arrComma                        : T_COMMA arrContent
+logicComponent                  : T_PAREN_OPEN exprWithoutNot T_PAREN_CLOSE 
+                                | bool
+                                | ariphmetic
                                 ;
 
-structures                      : T_IDENTIFIER T_CURLY_OPEN contentStruct T_CURLY_CLOSE
-                                | T_BRACKET_OPEN T_BRACKET_CLOSE T_IDENTIFIER T_CURLY_OPEN contentStruct T_CURLY_CLOSE
+ariphmetic                      : ariphmeticComponent ariphmeticEnd
                                 ;
 
-contentStruct                   : T_IDENTIFIER T_COLON contentStructComma T_COMMA contentStruct
+ariphmeticEnd                   : T_MUL ariphmetic
+                                | T_DIV ariphmetic
+                                | T_MOD ariphmetic
+                                | T_PLUS ariphmetic
+                                | T_MINUS ariphmetic
                                 |
                                 ;
 
-contentStructComma              : value
-                                | T_IDENTIFIER
-                                ;
-
-arithmeticExpression            : arithmeticExpression T_PLUS T
-                                | arithmeticExpression T_MINUS T
-                                | T
-                                ;
-
-T                               : T T_MUL F
-                                | T T_DIV F
-                                | T T_MOD F
-                                | F
-                                ;
-
-F                               : T_PAREN_OPEN arithmeticExpression T_PAREN_CLOSE
-                                | T_IDENTIFIER
-                                | T_IDENTIFIER T_BRACKET_OPEN arithmeticExpression T_BRACKET_CLOSE
+ariphmeticComponent             : T_PAREN_OPEN expressions T_PAREN_CLOSE
+                                | id
+                                | T_IDENTIFIER arrayExpression
                                 | number
                                 | T_STRING
-
                                 ;
 
-number                          : T_INTEGER
-                                | T_FLOAT64
+arrayExpression                 : T_BRACKET_OPEN arrayIndex T_BRACKET_CLOSE
                                 ;
 
-relationalExpression            : arithmeticExpression relationalOperator arithmeticExpression
-                                | T_STRING relationalOperator T_STRING
-                                | T_TRUE
-                                | T_FALSE
+arrayIndex                      : ariphmetic
+                                | arraySize
                                 ;
 
-relationalOperator              : T_NOTEQ
-                                | T_COMP
-                                | T_LTE
-                                | T_GTE
-                                | T_LT
-                                | T_GT
+arraySize                       : T_INTEGER T_COLON arraySizeEnd
+                                | T_COLON T_INTEGER
                                 ;
 
-logicalExpression               : T_BNOT L
-                                | L
-                                ;
-
-L                               : M T_AND L
-                                | M
-                                ;
-                       
-M                               : N T_OR M
-                                | N
-                                ;
-
-N                               : T_PAREN_OPEN relationalExpression T_PAREN_CLOSE
+arraySizeEnd                    : T_INTEGER
+                                |
                                 ;
 
 %%

@@ -58,9 +58,15 @@ else                                         {return T_ELSE;}
 defer                                        {return T_DEFER;}
 range                                        {return T_RANGE;}
 continue                                     {return T_CONTINUE;}
+make                                         {return T_MAKE;}
+chan                                         {return T_CHAN;}
+go                                           {return T_GO;}
+select                                       {return T_SELECT;}
+close                                        {return T_CLOSE;}
 
 
  /* "OPERATOR"S */
+"<-"                                         {return T_ARROW}
 "+="					                     {return T_SPLUS;}
 "-="					                     {return T_SMINUS;}
 "*="					                     {return T_SMUL;}

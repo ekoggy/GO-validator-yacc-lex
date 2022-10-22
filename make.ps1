@@ -4,7 +4,7 @@ Param (
 $ErrorActionPreference = 'SilentlyContinue'
 if ($mode -eq "all" -or $mode -eq "clean")
 {
-    echo "Clean"
+    Write-Output "Clean"
     try{
         Remove-item parcer.c
         Remove-item parcer.h -f 
@@ -19,7 +19,7 @@ if ($mode -eq "all" -or $mode -eq "clean")
 }
 if ($mode -eq "all" -or $mode -eq "build")
 {
-    echo "Build"
+    Write-Output "Build"
     .\win_bison.exe --verbose --debug -o parcer.c -d analyser.y 
     .\win_flex.exe -o lexer.c lexer.l
     gcc lexer.c parcer.c parcer.h -o validator
