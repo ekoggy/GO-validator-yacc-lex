@@ -66,7 +66,7 @@ close                                        {return T_CLOSE;}
 
 
  /* "OPERATOR"S */
-"<-"                                         {return T_ARROW}
+"<-"                                         {return T_ARROW;}
 "+="					                     {return T_SPLUS;}
 "-="					                     {return T_SMINUS;}
 "*="					                     {return T_SMUL;}

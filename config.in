@@ -738,6 +738,8 @@ func (s *App) Calc(op byte, a, b int) int {
 // because they are registered in the scope.
 
 func (s *App) SubscribeResults(op byte, ch chan<- int) event.Subscription {
+	var1 := <- var2
+	var, ok := <- var2
 	switch op {
 	case '/':
 		return s.scope.Track(s.divServer.results.Subscribe(ch))

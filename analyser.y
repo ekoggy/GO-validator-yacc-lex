@@ -65,6 +65,8 @@ semi                            : T_SEMI
 type                            : pointerType
                                 | T_BRACKET_OPEN T_BRACKET_CLOSE pointerType
                                 | T_BRACKET_OPEN T_INTEGER T_BRACKET_CLOSE pointerType
+                                | T_CHAN pointerType
+                                | T_CHAN T_ARROW pointerType
                                 ;
 
 pointerType                     : T_MUL commonType
@@ -93,13 +95,6 @@ number                          : T_INTEGER
                                 ;
 
 bool                            : T_TRUE
-                                | T_FALSE
-                                ;
-
-value          	                : T_INTEGER
-                                | T_FLOAT64
-                                | T_STRING
-                                | T_TRUE
                                 | T_FALSE
                                 ;
 
@@ -155,18 +150,6 @@ extArraylength                  : number
 extArrayvalues                  : value
                                 | arrayvalues T_COMMA value
                                 | 
-                                ;
- 
-extArrDefinition                : T_CURLY_OPEN extArrayvalues T_CURLY_CLOSE
-                                |
-                                ;
- 
-extArraylength                  : number
-                                |
-                                ;
-
-extArrayvalues                  : value
-                                | arrayvalues T_COMMA value
                                 ;
 
 
@@ -251,6 +234,7 @@ statements                      : statement statements
                                 ;
 
 statement                       : return
+                                | gorutine
                                 | if
                                 | arrays
                                 | functions
@@ -265,6 +249,17 @@ statement                       : return
                                 | T_CONTINUE
                                 ;
 
+
+
+/**********************GORUTINE**********************/
+gorutine                        : T_GO shortFunc T_PAREN_OPEN T_PAREN_CLOSE
+                                ;
+
+makeExpression                  : T_MAKE T_PAREN_OPEN makeContent T_PAREN_CLOSE
+                                ;
+
+makeContent                     : type
+                                | type T_COMMA T_INTEGER
 
 
 /**********************IF-ELSE**********************/
@@ -348,6 +343,7 @@ variables                       : T_VAR T_PAREN_OPEN funcVarContent T_PAREN_CLOS
                                 | T_VAR funcVarIdentifier type varEnd semi
                                 | T_VAR T_IDENTIFIER T_ASSIGN expressions semi                                
                                 | T_VAR T_IDENTIFIER T_ASSIGN structures semi
+                                | T_VAR T_IDENTIFIER T_ASSIGN makeExpression semi
                                 ;
 
 varEnd                          : T_ASSIGN expressions
@@ -369,6 +365,7 @@ funcVarComma					: funcVarContent
 funcVarExpression               : type T_ASSIGN value
                                 | T_ASSIGN value
                                 | type
+                                | T_ASSIGN makeExpression
                                 ;
 
 
@@ -435,6 +432,7 @@ variableAssignment              : varIdentifier operator variableEx varExpr semi
 variableEx                      : shortArray
                                 | structures
                                 | expressions
+                                | T_ARROW T_IDENTIFIER
                                 ;
 
 varExpr                         : T_COMMA variableEx varExpr
