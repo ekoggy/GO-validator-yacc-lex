@@ -96,6 +96,12 @@ bool                            : T_TRUE
                                 | T_FALSE
                                 ;
 
+value          	                : T_INTEGER
+                                | T_FLOAT64
+                                | T_STRING
+                                | T_TRUE
+                                | T_FALSE
+                                ;
 
 
 /********************IMPORTS********************/
@@ -150,7 +156,18 @@ extArrayvalues                  : value
                                 | arrayvalues T_COMMA value
                                 | 
                                 ;
+ 
+extArrDefinition                : T_CURLY_OPEN extArrayvalues T_CURLY_CLOSE
+                                |
+                                ;
+ 
+extArraylength                  : number
+                                |
+                                ;
 
+extArrayvalues                  : value
+                                | arrayvalues T_COMMA value
+                                ;
 
 
 /**********************STRUCTS**********************/
