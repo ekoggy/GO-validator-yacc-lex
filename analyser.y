@@ -77,7 +77,7 @@ commonType                      : T_INT
                                 | T_STR    
                                 | T_FLT64
                                 | T_BOOL
-                                | T_MAP 
+                                | T_MAP T_BRACKET_OPEN type T_BRACKET_CLOSE type
                                 | id
                                 ;
 
@@ -105,7 +105,8 @@ import							: T_IMPORT T_PAREN_OPEN importContent T_PAREN_CLOSE semi
                                 |
 								;
 								
-importContent					: T_STRING {if(linecounter == yylineno) yyerror("syntax"); linecounter = yylineno;} importComma 
+importContent					: T_STRING {if(linecounter == yylineno) yyerror("syntax"); linecounter = yylineno;} importComma
+                                | T_IDENTIFIER T_STRING {if(linecounter == yylineno) yyerror("syntax"); linecounter = yylineno;} importComma 
 								;
 								
 importComma						: importContent             
@@ -138,6 +139,7 @@ varExpression                   : type T_ASSIGN value
                                 | T_ASSIGN value
                                 | type
                                 | T_BRACKET_OPEN extArraylength T_BRACKET_CLOSE type extArrDefinition semi
+                                | T_ASSIGN functions
                                 ;
  
 extArrDefinition                : T_CURLY_OPEN extArrayvalues T_CURLY_CLOSE
@@ -156,8 +158,14 @@ extArrayvalues                  : value
 /**********************STRUCTS**********************/
 
 struct							: T_TYPE T_IDENTIFIER T_STRUCT T_CURLY_OPEN structContent T_CURLY_CLOSE semi
+                                | T_TYPE T_IDENTIFIER T_FUNC T_PAREN_OPEN addTypes T_PAREN_CLOSE semi
 								;
 								
+addTypes                        : type addTypes
+                                | T_COMMA type addTypes
+                                |
+                                ;
+
 structContent					: structIdentifier {if(linecounter == yylineno) yyerror("syntax"); linecounter = yylineno;} type structAdd structComma
 								;
 
@@ -361,7 +369,7 @@ funcreturncomma                 : T_COMMA returnStatement
 
 
 /**********************CALLING FUNCTIONS**********************/
-functions                       : T_IDENTIFIER argslist funcDot semi
+functions                       : T_IDENTIFIER argslist funcDot
                                 ;
 
 funcDot                         : T_DOT functions
@@ -388,11 +396,11 @@ arg                             : expressions
 
 
 /**********************VARIABLE DECLARATION**********************/
-variables                       : T_VAR T_PAREN_OPEN funcVarContent T_PAREN_CLOSE semi
-                                | T_VAR funcVarIdentifier type varEnd semi
-                                | T_VAR T_IDENTIFIER T_ASSIGN expressions semi                                
-                                | T_VAR T_IDENTIFIER T_ASSIGN structures semi
-                                | T_VAR T_IDENTIFIER T_ASSIGN makeExpression semi
+variables                       : T_VAR T_PAREN_OPEN funcVarContent T_PAREN_CLOSE
+                                | T_VAR funcVarIdentifier type varEnd
+                                | T_VAR T_IDENTIFIER T_ASSIGN expressions                               
+                                | T_VAR T_IDENTIFIER T_ASSIGN structures
+                                | T_VAR T_IDENTIFIER T_ASSIGN makeExpression
                                 ;
 
 varEnd                          : T_ASSIGN expressions
@@ -438,8 +446,12 @@ switchCaseStatements            : switchCaseStatement switchCaseStatements
                                 |
                                 ;
 
-switchCaseStatement             : T_CASE expressions T_COLON statements switchEnd
+switchCaseStatement             : T_CASE expressions endswitch T_COLON statements switchEnd
                                 | T_DEFAULT T_COLON statements
+                                ;
+
+endswitch                       : T_COMMA expressions
+                                |
                                 ;
 
 switchEnd                       : T_BREAK
@@ -472,6 +484,7 @@ shortArray                      : T_BRACKET_OPEN arraylength T_BRACKET_CLOSE poi
                                 | T_BRACKET_OPEN arraylength T_BRACKET_CLOSE pointerType T_CURLY_OPEN structFilling T_CURLY_CLOSE
                                 | T_BRACKET_OPEN arraylength T_BRACKET_CLOSE pointerType T_CURLY_OPEN T_CURLY_CLOSE
                                 | T_BRACKET_OPEN arraylength T_BRACKET_CLOSE pointerType
+
 
 
 /**********************VARIABLE ASSIGNMENT**********************/
@@ -513,11 +526,10 @@ arrayAssignment                 : array T_ASSIGN expressions semi
 cicles                          : T_FOR cicle cicleBody semi
                                 ;
 
-cicle                           : counter 
-                                | T_SEMI counter T_SEMI
+cicle                           : counter T_SEMI condition T_SEMI changer
                                 | condition 
                                 | T_SEMI condition T_SEMI
-                                | counter T_SEMI condition T_SEMI changer
+                                | counter 
                                 |
                                 ;
 
@@ -564,7 +576,6 @@ cicleBody                       : T_CURLY_OPEN statements T_CURLY_CLOSE
 
 
 /**********************STRUCT ASSIGNMENT**********************/
-
 structures                      : T_IDENTIFIER structExpression
                                 | T_BAND T_IDENTIFIER structExpression
                                 ;
@@ -600,6 +611,7 @@ onceFillingEnd                  : T_COMMA onceFilling
                                 ;
 
 
+
 /**********************OTHER CONSTRUCTIONS**********************/
 expressions                     : expression expressionEnd
                                 ;
@@ -625,7 +637,6 @@ expression                      : T_BNOT exprWithoutNot
                                 ;
 
 exprWithoutNot                  : logic
-                                | functions
                                 ;
 
 logic                           : logicComponent logicEnd
@@ -656,8 +667,14 @@ ariphmeticEnd                   : T_MUL ariphmetic
 ariphmeticComponent             : T_PAREN_OPEN expressions T_PAREN_CLOSE
                                 | id
                                 | T_IDENTIFIER arrayExpression
+                                | T_MINUS number
                                 | number
                                 | T_STRING
+                                | functions
+                                | cast
+                                ;
+
+cast                            :   type T_PAREN_OPEN expression T_PAREN_CLOSE
                                 ;
 
 arrayExpression                 : T_BRACKET_OPEN arrayIndex T_BRACKET_CLOSE
@@ -667,11 +684,12 @@ arrayIndex                      : ariphmetic
                                 | arraySize
                                 ;
 
-arraySize                       : T_INTEGER T_COLON arraySizeEnd
-                                | T_COLON T_INTEGER
+arraySize                       : arraySizes T_COLON arraySizes
                                 ;
 
-arraySizeEnd                    : T_INTEGER
+arraySizes                      : T_INTEGER
+                                | T_IDENTIFIER
+                                | functions
                                 |
                                 ;
 
