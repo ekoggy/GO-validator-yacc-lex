@@ -178,6 +178,7 @@ structComma						: structContent
 /**********************FUNCTIONS**********************/
 //definition
 shortFunc                       :T_FUNC{linecounter = yylineno;} parameters functext
+                                ;
 
 func                            : T_FUNC{linecounter = yylineno;} receiver funcname parameters returnvalue functext
                                 ;
@@ -213,14 +214,27 @@ parameterIdentifier             : T_IDENTIFIER
 
 //return value
 returnvalue                      : type
+                                 | T_IDENTIFIER type
                                  | T_PAREN_OPEN multireturn T_PAREN_CLOSE
                                  |
                                  ;
 
-multireturn                      : type returncomma
+multireturn                      : returnTypeComma
+                                 | returnIdComma
                                  ;
 
-returncomma                      : T_COMMA returnvalue
+returnTypeComma                  : type returnTypeCommaEnd
+                                 ;
+
+returnTypeCommaEnd               : T_COMMA returnTypeComma
+                                 | returnTypeComma
+                                 |
+                                 ;
+
+returnIdComma                    : T_IDENTIFIER type returnIdCommaEnd
+                                 ;
+
+returnIdCommaEnd                 : T_COMMA returnIdComma
                                  |
                                  ;
 
@@ -234,6 +248,8 @@ statements                      : statement statements
                                 ;
 
 statement                       : return
+                                | select
+                                | close
                                 | gorutine
                                 | if
                                 | arrays
@@ -251,8 +267,38 @@ statement                       : return
 
 
 
+/**********************SELECT**********************/
+select                          : T_SELECT T_CURLY_OPEN selectCaseStatements T_CURLY_CLOSE semi
+                                ;
+
+selectCaseStatements            : selectCaseStatement selectCaseStatements
+                                |
+                                ;
+
+selectCaseStatement             : T_CASE selectExpression T_COLON statements
+                                | T_DEFAULT T_COLON statements
+                                ;
+
+selectExpression                : T_IDENTIFIER T_WALRUS T_ARROW selectRight
+                                | T_IDENTIFIER T_ARROW selectRight
+                                | T_ARROW selectRight
+                                ;
+
+selectRight                     : T_IDENTIFIER
+                                | functions
+                                ;
+
+
+
+
+/**********************CLOSE CHANNEL**********************/
+close                           : T_CLOSE T_PAREN_OPEN T_IDENTIFIER T_PAREN_CLOSE
+                                ;
+
+
 /**********************GORUTINE**********************/
 gorutine                        : T_GO shortFunc T_PAREN_OPEN T_PAREN_CLOSE
+                                | T_GO functions
                                 ;
 
 makeExpression                  : T_MAKE T_PAREN_OPEN makeContent T_PAREN_CLOSE
@@ -301,9 +347,11 @@ defer                           : T_DEFER functions
 
 /**********************RETURN**********************/
 return                          : T_RETURN returnStatement semi
+                                | T_RETURN
                                 ;
 
 returnStatement                 : expressions funcreturncomma
+                                | shortFunc funcreturncomma
                                 ;
 
 funcreturncomma                 : T_COMMA returnStatement 
@@ -334,6 +382,7 @@ argsEnd                         : T_COMMA args
 arg                             : expressions
                                 | shortFunc
                                 | structures
+                                | T_ARROW T_IDENTIFIER
                                 ;
 
 
@@ -427,11 +476,15 @@ shortArray                      : T_BRACKET_OPEN arraylength T_BRACKET_CLOSE poi
 
 /**********************VARIABLE ASSIGNMENT**********************/
 variableAssignment              : varIdentifier operator variableEx varExpr semi
+                                | T_IDENTIFIER T_ARROW expression
+                                | T_IDENTIFIER T_PLUS T_PLUS
+                                | T_IDENTIFIER T_MINUS T_MINUS
                                 ;
 
 variableEx                      : shortArray
                                 | structures
                                 | expressions
+                                | makeExpression
                                 | T_ARROW T_IDENTIFIER
                                 ;
 
@@ -460,13 +513,16 @@ arrayAssignment                 : array T_ASSIGN expressions semi
 cicles                          : T_FOR cicle cicleBody semi
                                 ;
 
-cicle                           : counter T_SEMI condition T_SEMI changer
+cicle                           : counter 
+                                | T_SEMI counter T_SEMI
+                                | condition 
                                 | T_SEMI condition T_SEMI
-                                | condition
+                                | counter T_SEMI condition T_SEMI changer
                                 |
                                 ;
 
 counter                         : T_IDENTIFIER T_WALRUS number
+                                | T_IDENTIFIER T_WALRUS T_RANGE rangeEnd
                                 ;
 
 condition                       : cicleVariables conditionOperator cicleCounters
@@ -497,6 +553,8 @@ rangeEnd                        : functions
                                 ;
 
 changer                         : T_IDENTIFIER T_PLUS T_PLUS
+                                | T_IDENTIFIER T_MINUS T_MINUS
+                                | ariphmetic
                                 ;
 
 cicleBody                       : T_CURLY_OPEN statements T_CURLY_CLOSE
@@ -522,6 +580,7 @@ structFilling                   : doubleFilling
 doubleFilling                   : T_IDENTIFIER T_COLON logic doubleFillingEnd
                                 | T_IDENTIFIER T_COLON structures doubleFillingEnd
                                 | T_IDENTIFIER T_COLON functions doubleFillingEnd
+                                | T_IDENTIFIER T_COLON makeExpression doubleFillingEnd
                                 ;
 
 doubleFillingEnd                : T_COMMA doubleFilling
@@ -532,6 +591,7 @@ doubleFillingEnd                : T_COMMA doubleFilling
 onceFilling                     : logic onceFillingEnd
                                 | structures onceFillingEnd
                                 | functions onceFillingEnd
+                                | makeExpression onceFillingEnd
                                 ;
 
 onceFillingEnd                  : T_COMMA onceFilling  
@@ -567,7 +627,6 @@ expression                      : T_BNOT exprWithoutNot
 exprWithoutNot                  : logic
                                 | functions
                                 ;
-
 
 logic                           : logicComponent logicEnd
                                 ;
