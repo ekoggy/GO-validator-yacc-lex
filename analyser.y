@@ -271,6 +271,7 @@ statement                       : return
                                 | T_BREAK
                                 | repeat
                                 | T_CONTINUE
+                                | shortFunc T_PAREN_OPEN T_PAREN_CLOSE
                                 ;
 
 
@@ -360,6 +361,7 @@ return                          : T_RETURN returnStatement semi
 
 returnStatement                 : expressions funcreturncomma
                                 | shortFunc funcreturncomma
+                                | structures funcreturncomma
                                 ;
 
 funcreturncomma                 : T_COMMA returnStatement 
@@ -373,6 +375,7 @@ functions                       : T_IDENTIFIER argslist funcDot
                                 ;
 
 funcDot                         : T_DOT functions
+                                | T_DOT T_IDENTIFIER
                                 |
                                 ;
 
@@ -384,13 +387,16 @@ args                            : arg argsEnd
                                 ;
 
 argsEnd                         : T_COMMA args
+                                | T_COMMA
                                 |
                                 ;
 
 arg                             : expressions
                                 | shortFunc
+                                | shortStructures
                                 | structures
                                 | T_ARROW T_IDENTIFIER
+                                | T_MUL T_IDENTIFIER
                                 ;
 
 
@@ -538,6 +544,7 @@ counter                         : T_IDENTIFIER T_WALRUS number
                                 ;
 
 condition                       : cicleVariables conditionOperator cicleCounters
+                                | T_RANGE rangeEnd
                                 ;
 
 conditionOperator               : expressionSign
@@ -576,6 +583,9 @@ cicleBody                       : T_CURLY_OPEN statements T_CURLY_CLOSE
 
 
 /**********************STRUCT ASSIGNMENT**********************/
+shortStructures                 : T_STRUCT T_CURLY_OPEN structContent T_CURLY_CLOSE structExpression
+                                ;
+
 structures                      : T_IDENTIFIER structExpression
                                 | T_BAND T_IDENTIFIER structExpression
                                 ;
@@ -677,7 +687,11 @@ ariphmeticComponent             : T_PAREN_OPEN expressions T_PAREN_CLOSE
 cast                            :   type T_PAREN_OPEN expression T_PAREN_CLOSE
                                 ;
 
-arrayExpression                 : T_BRACKET_OPEN arrayIndex T_BRACKET_CLOSE
+arrayExpression                 : T_BRACKET_OPEN arrayIndex T_BRACKET_CLOSE arrayExpressionEnd 
+                                ;
+
+arrayExpressionEnd              : arrayExpression
+                                |
                                 ;
 
 arrayIndex                      : ariphmetic

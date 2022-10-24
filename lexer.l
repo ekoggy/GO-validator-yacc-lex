@@ -136,7 +136,7 @@ true                                         {return T_TRUE;}
 \`.*\`                                       {return T_STRING;}
 \'.*\'                                       {return T_STRING;}
 {floatNumber}                                {return T_FLOAT64;}
-map\[{types}\]{types}                        {return T_MAP;}
+map                                          {return T_MAP;}
 
 
 
