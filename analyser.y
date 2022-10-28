@@ -63,7 +63,7 @@ semi                            : T_SEMI
                                 ;
 
 type                            : pointerType
-                                | T_BRACKET_OPEN T_BRACKET_CLOSE pointerType
+                                | T_BRACKET_OPEN T_BRACKET_CLOSE pointerType 
                                 | T_BRACKET_OPEN T_INTEGER T_BRACKET_CLOSE pointerType
                                 | T_CHAN pointerType
                                 | T_CHAN T_ARROW pointerType
@@ -216,8 +216,12 @@ parameterComma					: parameter
 								|
 								;
 
-parameterIdentifier             : T_IDENTIFIER
-                                | T_IDENTIFIER T_COMMA parameterIdentifier
+parameterIdentifier             : T_IDENTIFIER parameterIdentifierEnd
+                                ;
+
+parameterIdentifierEnd          : T_COMMA parameterIdentifier
+                                |
+                                ;
 
 
 //return value
@@ -239,12 +243,14 @@ returnTypeCommaEnd               : T_COMMA returnTypeComma
                                  |
                                  ;
 
-returnIdComma                    : T_IDENTIFIER type returnIdCommaEnd
+returnIdComma                    : id type returnIdCommaEnd
                                  ;
 
 returnIdCommaEnd                 : T_COMMA returnIdComma
                                  |
                                  ;
+
+
 
 
 //function text
@@ -339,11 +345,7 @@ elseEnd                         : if
 
 
 /**********************REPEAT**********************/
-repeat                          : T_REPEAT T_CURLY_OPEN statements T_CURLY_CLOSE T_UNTIL repCondition
-                                ;
-
-repCondition                    : T_PAREN_OPEN expressions T_PAREN_CLOSE
-                                | expressions
+repeat                          : T_REPEAT T_CURLY_OPEN statements T_CURLY_CLOSE T_UNTIL expressions
                                 ;
 
 
@@ -486,7 +488,9 @@ arrayvalues                     : value
                                 | arrayvalues T_COMMA value
                                 ;
 
-shortArray                      : T_BRACKET_OPEN arraylength T_BRACKET_CLOSE pointerType T_CURLY_OPEN expressions T_CURLY_CLOSE
+shortArray                      : 
+                                T_BRACKET_OPEN T_BRACKET_CLOSE T_STR T_CURLY_OPEN T_CURLY_CLOSE
+                                | T_BRACKET_OPEN arraylength T_BRACKET_CLOSE pointerType T_CURLY_OPEN expressions T_CURLY_CLOSE
                                 | T_BRACKET_OPEN arraylength T_BRACKET_CLOSE pointerType T_CURLY_OPEN structFilling T_CURLY_CLOSE
                                 | T_BRACKET_OPEN arraylength T_BRACKET_CLOSE pointerType T_CURLY_OPEN T_CURLY_CLOSE
                                 | T_BRACKET_OPEN arraylength T_BRACKET_CLOSE pointerType
@@ -588,6 +592,7 @@ shortStructures                 : T_STRUCT T_CURLY_OPEN structContent T_CURLY_CL
 
 structures                      : T_IDENTIFIER structExpression
                                 | T_BAND T_IDENTIFIER structExpression
+                                | T_BRACKET_OPEN T_BRACKET_CLOSE T_IDENTIFIER structExpression
                                 ;
 
 structExpression                : T_CURLY_OPEN structFilling T_CURLY_CLOSE
@@ -598,9 +603,8 @@ structFilling                   : doubleFilling
                                 |
                                 ;
 
-doubleFilling                   : T_IDENTIFIER T_COLON logic doubleFillingEnd
+doubleFilling                   : T_IDENTIFIER T_COLON expressions doubleFillingEnd
                                 | T_IDENTIFIER T_COLON structures doubleFillingEnd
-                                | T_IDENTIFIER T_COLON functions doubleFillingEnd
                                 | T_IDENTIFIER T_COLON makeExpression doubleFillingEnd
                                 ;
 
@@ -609,9 +613,8 @@ doubleFillingEnd                : T_COMMA doubleFilling
                                 |
                                 ;
 
-onceFilling                     : logic onceFillingEnd
+onceFilling                     : expressions onceFillingEnd
                                 | structures onceFillingEnd
-                                | functions onceFillingEnd
                                 | makeExpression onceFillingEnd
                                 ;
 
